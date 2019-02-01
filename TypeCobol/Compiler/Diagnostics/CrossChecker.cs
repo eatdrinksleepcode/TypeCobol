@@ -461,6 +461,12 @@ namespace TypeCobol.Compiler.Diagnostics
                 {
                     IndexAndFlagDataDefiniton(completeQualifiedName, dataDefinitionFound, node, area, storageArea);
                 }
+
+                if (dataDefinitionFound.IsFlagSet(Node.Flag.GlobalStorageSection))
+                {
+                    //We must find the enclosing FunctionDeclaration or Program (if node is outside a function/procedure)
+                    node.GetEnclosingProgramOrFunctionNode().SetFlag(Node.Flag.UseGlobalStorage, true);
+                }
                 //add the found DataDefinition to a dictionary depending on the storage area type
                 if (isReadStorageArea)
                 {
