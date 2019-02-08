@@ -16,7 +16,7 @@ namespace TypeCobol.Compiler.Nodes {
     ///     - parent/children relations
     ///     - unique identification accross the tree
     /// </summary>
-    public abstract class Node : IVisitable{
+    public abstract class Node : IVisitable, ICloneable{
         protected List<Node> children = new List<Node>();
 
         /// <summary>TODO: Codegen should do its stuff without polluting this class.</summary>
@@ -196,6 +196,10 @@ namespace TypeCobol.Compiler.Nodes {
             /// Codegen Ignore comment action on this node.
             /// </summary>
             IgnoreCommentAction = 0x01 << 28,
+            /// <summary>
+            /// Codegen node is cloned.
+            /// </summary>
+            IsCloned = 0x01 << 29,
 
 
 
@@ -800,6 +804,32 @@ namespace TypeCobol.Compiler.Nodes {
             }
 
             return searchedElem?.Item2;
+        }
+
+        /// <summary>
+        /// Clone the children of this node by creating a new list of Nodes.
+        /// </summary>
+        /// <param name="node"></param>
+        private void CloneChildren(Node parent)
+        {
+            var oldChildren = this.children;
+            this.children = new List<Node>();
+            foreach (var child in oldChildren)
+            {
+                Node cloned = (Node)child.Clone();
+                parent.Add(cloned);
+            }
+        }
+
+        /// <summary>
+        /// Clone this node and its children using MemberwiseClone
+        /// </summary>
+        /// <returns>The Clone</returns>
+        public object Clone()
+        {
+            Node cloned = (Node)MemberwiseClone();
+            CloneChildren(cloned);
+            return cloned;
         }
     }
 
