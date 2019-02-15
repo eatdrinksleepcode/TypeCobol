@@ -11,6 +11,8 @@ using TypeCobol.Compiler.Nodes;
 using TypeCobol.Compiler.Source;
 using TypeCobol.Compiler.Text;
 using TypeCobol.Compiler.Diagnostics;
+using TypeCobol.Compiler.Scanner;
+using TypeCobol.Compiler.File;
 
 namespace TypeCobol.Codegen.Generators
 {
@@ -79,7 +81,17 @@ namespace TypeCobol.Codegen.Generators
             LinearNodeSourceCodeMapper mapper = new LinearNodeSourceCodeMapper(this);
             mapper.Accept(RootNode);
             //mapper.DebugDump();
-            SourceText generatedDocument = LinearGeneration(mapper, CompilationResults.TokensLines);
+            //If the node has Cloned node create a second linear node source code mapper and visit each cloned node.
+            LinearNodeSourceCodeMapper clonedMapper = null;
+            if (ClonedNodes.Count > 0)
+            {
+                clonedMapper = new LinearNodeSourceCodeMapper(this);
+                foreach (var cloned in ClonedNodes)
+                {
+                    clonedMapper.Accept(cloned);
+                }
+            }
+            SourceText generatedDocument = LinearGeneration(mapper, CompilationResults.TokensLines, clonedMapper);
             // Step 3: Write target document
             //TCCODEGEN_NO_TRAILING_SPACES
             generatedDocument.Write(Destination);
@@ -93,9 +105,25 @@ namespace TypeCobol.Codegen.Generators
         /// //4) Flush of Function declations.
         /// <param name="mapper">The linearization representation</param>
         /// <param name="Input">Input source lines</param>
+        /// <param name="clonedMapper">Linear mapper for cloned nodes</param>
         /// <returns>The Generated Source Document</returns>
         /// </summary>
-        private SourceText LinearGeneration<A>(LinearNodeSourceCodeMapper mapper, IReadOnlyList<A> Input) where A : ITextLine
+        private SourceText LinearGeneration<A>(LinearNodeSourceCodeMapper mapper, IReadOnlyList<A> Input, LinearNodeSourceCodeMapper clonedMapper = null) where A : ITextLine
+        {
+            return LinearGeneration<A>(mapper, clonedMapper, Input, 0, mapper.LineData.Length);
+        }
+
+        /// <summary>
+        /// /// Perform a linear Generation
+        /// </summary>
+        /// <typeparam name="A"></typeparam>
+        /// <param name="mapper">The linearization representation</param>
+        /// <param name="clonedMapper">Linear mapper for cloned nodes</param>
+        /// <param name="Input">Input source lines</param>
+        /// <param name="startLine">The starting line (0 based)</param>
+        /// <param name="endLine">The ending line (0- based and excluded)</param>
+        /// <returns>The Generated Source Document</returns>
+        private SourceText LinearGeneration<A>(LinearNodeSourceCodeMapper mapper, LinearNodeSourceCodeMapper clonedMapper, IReadOnlyList<A> Input, int startLine, int endLine) where A : ITextLine
         {
             SourceText targetSourceText = new GapSourceText();
             //Stack Used to save current generation buffer when switching in a function declaration generation.
@@ -109,7 +137,7 @@ namespace TypeCobol.Codegen.Generators
             //The previous line generation buffer 
             StringSourceText previousBuffer = null;
             bool insideMultilineComments = false;
-            for (int i = 0; i < mapper.LineData.Length; i++)
+            for (int i = startLine; i < endLine; i++)
             {
                 if (i == TypeCobolVersionLineNumber && this.TypeCobolVersion != null)
                 {
@@ -345,34 +373,119 @@ namespace TypeCobol.Codegen.Generators
                 LinearNodeSourceCodeMapper.NodeFunctionData funData = mapper.Nodes[fun_index] as LinearNodeSourceCodeMapper.NodeFunctionData;
                 AppendBufferContent(targetSourceText, funData.FunctionDeclBuffer);
             }
-            ////5)//Generate stacked program for the global-storage section
-            //if (mapper.UseGlobalStorageSection)
-            //{
-            //    StringWriter sw = new StringWriter();                
-            //    //Uncomment all Global Storages
-            //    (new Comment(this.RootNode.GlobalStorageProgram, false)).Execute();
-            //    var Actions = new GeneratorActions(this, null, this.CompilationResults, new TypeCobol.Codegen.Actions.Skeletons());
-
-            //    foreach (var gs in this.RootNode.GlobalStorageProgram.Children)
-            //    {
-            //        gs.SetFlag(Node.Flag.IgnoreCommentAction, true);
-            //        gs.SetFlag(Node.Flag.GeneratorErasedNode, false, true);
-            //        Actions.Perform(gs);
-            //    }
-            //    var lines = this.RootNode.GlobalStorageProgram.Lines;
-            //    foreach (var line in lines)
-            //    {
-            //        foreach (var l in Indent(line, null))
-            //        {
-            //            sw.WriteLine(l.Text.TrimEnd());
-            //        }
-            //    }
-            //    InsertLineMaybeSplit(targetSourceText, sw.ToString(), targetSourceText.Size, targetSourceText.Size, false);
-            //}
+            //5)//Generate stacked program for the global-storage section
+            if (clonedMapper != null && mapper.UseGlobalStorageSection && clonedMapper.ClonedGlobalStorageSection != null)
+            {
+                string gsSrcPrg = GenerateGlobalStorageSectionStackedProgram(clonedMapper, Input);
+                InsertLineMaybeSplit(targetSourceText, gsSrcPrg.ToString(), targetSourceText.Size, targetSourceText.Size, false);
+            }
 
             //6)//Generate Line Exceed Diagnostics
-                GenerateExceedLineDiagnostics();
+            GenerateExceedLineDiagnostics();
             return targetSourceText;
+        }
+
+        /// <summary>
+        /// Check if this is a token to skip while parsing Global-Storage section.
+        /// Also handle scan state properties.
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        private static void AdvanceToNextStateAndAdjustTokenProperties(TokensLine tempTokensLine, Token t)
+        {
+            bool bSkip =  t == null || t.TokenFamily == TokenFamily.Whitespace || t.TokenFamily == TokenFamily.Comments || (t.TokenType == TokenType.UserDefinedWord &&  t.Text.Trim().Length == 0);
+            if (!bSkip)
+            {
+                tempTokensLine.ScanState.AdvanceToNextStateAndAdjustTokenProperties(t);
+                if (t.TokenType == TokenType.PictureCharacterString)
+                {//Strange case a Picture string can end with a '.' in this case reset last Significant token as if it was a PeriodSeparator.
+                    if (t.Text.Trim().EndsWith("."))
+                    {
+                        tempTokensLine.ScanState.LastSignificantToken = null;
+                        tempTokensLine.ScanState.BeforeLastSignificantToken = null;
+                    }
+                }
+            }
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="clonedMapper">The Linear Source Code Mapper contains the GlobalStorage Section.</param>
+        /// <param name="Input"></param>
+        /// <returns>The Whole Staked Program source code</returns>
+        private string GenerateGlobalStorageSectionStackedProgram<A>(LinearNodeSourceCodeMapper clonedMapper, IReadOnlyList<A> Input) where A : ITextLine
+        {
+            StringWriter sw = new StringWriter();
+            sw.WriteLine("       IDENTIFICATION DIVISION.");
+            sw.WriteLine("       PROGRAM-ID. a9a9a5eaTC-GetGlobal.");
+            sw.WriteLine("       ENVIRONMENT DIVISION.");
+            sw.WriteLine("       CONFIGURATION SECTION.");
+            sw.WriteLine("       SOURCE-COMPUTER.");
+            sw.WriteLine("       SPECIAL-NAMES.      DECIMAL-POINT IS COMMA.");
+            sw.WriteLine("       DATA DIVISION.");
+            sw.WriteLine("       WORKING-STORAGE SECTION.");
+            sw.WriteLine("       01 PIC X(8) value ':TC:GBLS'.");
+            sw.WriteLine("       01 TC-GlobalData.");
+
+            //Compute the last line of the Global Storage Node.
+            int lastLine = -1;
+            Node lastNode = null;
+            clonedMapper.GetAfterLinearizationLastLine(clonedMapper.ClonedGlobalStorageSection, ref lastLine, ref lastNode);
+
+            SourceText gsSrcText = LinearGeneration(clonedMapper, null, Input, clonedMapper.ClonedGlobalStorageSection.CodeElement.Line - 1,
+                lastLine);
+            string gsText = gsSrcText.GetTextAt(0, gsSrcText.Size);
+            //Allocate a scanner to reparse and change increments level
+            TokensLine tempTokensLine = new TokensLine(
+                new TextLineSnapshot(0, gsText, null),
+                ColumnsLayout.FreeTextFormat);
+            //first true argument => we are in a DataDivision.
+            MultilineScanState scanState = new MultilineScanState(true, false, false, IBMCodePages.GetDotNetEncodingFromIBMCCSID(1147));
+            tempTokensLine.InitializeScanState(scanState);
+            Scanner scanner = new Scanner(gsText, 0, gsText.Length - 1, tempTokensLine, null, false);
+            scanner.BeSmartWithLevelNumber = true;
+            Token t = null;
+
+            while ((t = scanner.GetNextToken()) != null)
+            {
+                if (t.TokenType == TokenType.GLOBAL_STORAGE)
+                {//Skip GLOBAL-STORAGE SECTION. tokens
+                    while ((t = scanner.GetNextToken()) != null && t.TokenType != TokenType.PeriodSeparator)
+                    {
+                        AdvanceToNextStateAndAdjustTokenProperties(tempTokensLine, t);
+                    }
+                    AdvanceToNextStateAndAdjustTokenProperties(tempTokensLine, t);
+                    continue;
+                }
+                else if (t.TokenType == TokenType.LevelNumber)
+                {
+                    TypeCobol.Compiler.Scanner.IntegerLiteralTokenValue intValue =
+                        (TypeCobol.Compiler.Scanner.IntegerLiteralTokenValue)t.LiteralValue;
+                    long level = intValue.Number + 1;
+                    if (level <= 49)
+                    {
+                        sw.Write(level.ToString("00"));
+                    }
+                    else
+                    {
+                        sw.Write(t.Text);
+                    }
+                }
+                else
+                {
+                    sw.Write(t.Text);
+                }
+                AdvanceToNextStateAndAdjustTokenProperties(tempTokensLine, t);
+            }
+
+            sw.WriteLine("       LINKAGE SECTION.");
+            sw.WriteLine("       01 GlobalPointer pointer.");
+            sw.WriteLine("       PROCEDURE DIVISION USING BY REFERENCE GlobalPointer.");
+            sw.WriteLine("           set GlobalPointer to address of TC-GlobalData");
+            sw.WriteLine("       .");
+            sw.WriteLine("       END PROGRAM a9a9a5eaTC-GetGlobal.");
+
+            return sw.ToString();
         }
 
         /// <summary>

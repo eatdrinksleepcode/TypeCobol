@@ -812,8 +812,8 @@ namespace TypeCobol.Compiler.Nodes {
         /// <param name="node"></param>
         private void CloneChildren(Node parent)
         {
-            var oldChildren = this.children;
-            this.children = new List<Node>();
+            var oldChildren = parent.children;
+            parent.children = new List<Node>();
             foreach (var child in oldChildren)
             {
                 Node cloned = (Node)child.Clone();
