@@ -21,6 +21,13 @@ namespace TypeCobol.LanguageServer.Interfaces
         void TokensLinesChanged(object sender, EventArgs eventArgs);
 
         /// <summary>
+        /// Event handler when a ProgramClass has changed.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="eventArgs"></param>
+        void ProgramClassChanged(object sender, EventArgs eventArgs);
+
+        /// <summary>
         /// Event Handler when the whole document has changed.
         /// </summary>
         /// <param name="sender"></param>

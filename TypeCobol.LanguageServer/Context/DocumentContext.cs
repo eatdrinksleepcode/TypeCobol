@@ -79,11 +79,13 @@ namespace TypeCobol.LanguageServer.Context
                 {
                     FileCompiler.CompilationResultsForProgram.TokensLinesChanged += LanguageServer.TokensLinesChanged;
                     FileCompiler.CompilationResultsForProgram.WholeDocumentChanged += LanguageServer.WholeDocumentChanged;
+                    FileCompiler.CompilationResultsForProgram.ProgramClassChanged += LanguageServer.ProgramClassChanged;
                 }
                 else
                 {
                     FileCompiler.CompilationResultsForProgram.TokensLinesChanged -= LanguageServer.TokensLinesChanged;
                     FileCompiler.CompilationResultsForProgram.WholeDocumentChanged -= LanguageServer.WholeDocumentChanged;
+                    FileCompiler.CompilationResultsForProgram.ProgramClassChanged -= LanguageServer.ProgramClassChanged;
                 }
             }
         }

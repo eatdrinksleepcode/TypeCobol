@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TypeCobol.Compiler;
 using TypeCobol.Compiler.Concurrency;
+using TypeCobol.Compiler.Parser;
 using TypeCobol.Compiler.Scanner;
 using TypeCobol.Compiler.Text;
 using TypeCobol.Compiler.TypeChecker;
@@ -155,6 +156,23 @@ namespace TypeCobol.LanguageServer
             }
         }
 
+
+        private OutlineNode _outlineNode = null;
+        private RefreshOutlineParams UpdateOutline(ProgramClassDocument programClassDocument)
+        {
+            if(_outlineNode == null)
+            {
+                _outlineNode = new OutlineNode(programClassDocument.Root);
+                return new RefreshOutlineParams(this.LspTextDocument, _outlineNode);
+            }
+
+            if (_outlineNode.Update(programClassDocument.Root))
+                return new RefreshOutlineParams(this.LspTextDocument, _outlineNode);
+            else
+                return null;
+        }
+
+
         /// <summary>
         /// Called when a token scanning has been performed.
         /// </summary>
@@ -208,6 +226,28 @@ namespace TypeCobol.LanguageServer
             SyntaxColoringParams scParams = new SyntaxColoringParams(this.LspTextDocument, docRange, tokens);
             //Now send the notification.
             this.RpcServer.SendNotification(SyntaxColoringNotification.Type, scParams);
+        }
+
+        /// <summary>
+        /// Handler when a ProgramClass has changed. 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public void ProgramClassChanged(object sender, EventArgs e)
+        {
+            System.Diagnostics.Debug.Assert(sender is CompilationUnit);
+            //System.Diagnostics.Debug.Assert(e is ProgramClassEvent);
+
+            var unit = (CompilationUnit)sender;
+            //if(unit.ProgramClassDocumentSnapshot.PreviousStepSnapshot.Lines)
+
+            var refreshOutlineParams = UpdateOutline(unit.ProgramClassDocumentSnapshot);
+            if (refreshOutlineParams != null)
+            {
+                this.RpcServer.SendNotification(RefreshOutlineNotification.Type, refreshOutlineParams);
+            }
+            
+
         }
 
         /// <summary>
