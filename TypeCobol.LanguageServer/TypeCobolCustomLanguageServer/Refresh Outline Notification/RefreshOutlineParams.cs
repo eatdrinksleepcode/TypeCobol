@@ -7,28 +7,28 @@ using TypeCobol.LanguageServer.VsCodeProtocol;
 
 namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
 {
-    class RefreshOutlineParams
+    public class RefreshOutlineParams
     {
         /// <summary>
-        /// The Text Document Identifier
+        /// The Text Document URI
         /// </summary>
-        public TextDocumentItem textDocument;
+        public string uri;
 
 
         /// <summary>
         /// The List of OutlineNode concerned
         /// </summary>
-        public OutlineNode outlineNode;
+        public List<OutlineNode> outlineNodes;
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="document">The Document's identifier</param>
-        /// <param name="outlineNodes">The List of concerned OutlineNode</param>
-        public RefreshOutlineParams(TextDocumentItem document, OutlineNode outlineNodes)
+        /// <param name="uri">The Document's identifier</param>
+        /// <param name="rootOutlineNode">The List of concerned OutlineNode</param>
+        public RefreshOutlineParams(string uri, OutlineNode rootOutlineNode)
         {
-            this.textDocument = document;
-            this.outlineNode = outlineNodes;
+            this.uri = uri;
+            this.outlineNodes = rootOutlineNode.childNodes;
         }
     }
 }

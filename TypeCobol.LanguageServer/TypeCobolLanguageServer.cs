@@ -157,17 +157,17 @@ namespace TypeCobol.LanguageServer
         }
 
 
-        private OutlineNode _outlineNode = null;
-        private RefreshOutlineParams UpdateOutline(ProgramClassDocument programClassDocument)
+        private OutlineNode _rootOutlineNode = null;
+        public RefreshOutlineParams UpdateOutline(ProgramClassDocument programClassDocument, bool bForced)
         {
-            if(_outlineNode == null)
+            if(_rootOutlineNode == null)
             {
-                _outlineNode = new OutlineNode(programClassDocument.Root);
-                return new RefreshOutlineParams(this.LspTextDocument, _outlineNode);
+                _rootOutlineNode = new OutlineNode(programClassDocument.Root);
+                return new RefreshOutlineParams(this.LspTextDocument.uri, _rootOutlineNode);
             }
 
-            if (_outlineNode.Update(programClassDocument.Root))
-                return new RefreshOutlineParams(this.LspTextDocument, _outlineNode);
+            if (_rootOutlineNode.Update(programClassDocument.Root) || bForced)
+                return new RefreshOutlineParams(this.LspTextDocument.uri, _rootOutlineNode);
             else
                 return null;
         }
@@ -226,28 +226,6 @@ namespace TypeCobol.LanguageServer
             SyntaxColoringParams scParams = new SyntaxColoringParams(this.LspTextDocument, docRange, tokens);
             //Now send the notification.
             this.RpcServer.SendNotification(SyntaxColoringNotification.Type, scParams);
-        }
-
-        /// <summary>
-        /// Handler when a ProgramClass has changed. 
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        public void ProgramClassChanged(object sender, EventArgs e)
-        {
-            System.Diagnostics.Debug.Assert(sender is CompilationUnit);
-            //System.Diagnostics.Debug.Assert(e is ProgramClassEvent);
-
-            var unit = (CompilationUnit)sender;
-            //if(unit.ProgramClassDocumentSnapshot.PreviousStepSnapshot.Lines)
-
-            var refreshOutlineParams = UpdateOutline(unit.ProgramClassDocumentSnapshot);
-            if (refreshOutlineParams != null)
-            {
-                this.RpcServer.SendNotification(RefreshOutlineNotification.Type, refreshOutlineParams);
-            }
-            
-
         }
 
         /// <summary>

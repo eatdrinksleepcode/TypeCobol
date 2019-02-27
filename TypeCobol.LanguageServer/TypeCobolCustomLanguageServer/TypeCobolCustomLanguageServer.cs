@@ -88,6 +88,17 @@ namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
             
         }
 
+        /// <summary>
+        /// The Node Refresh notification is sent from the client to the server 
+        /// It will force the server to do a Node Phase analyze. 
+        /// </summary>
+        /// <param name="uri"></param>
+        /// <param name="bForced"></param>
+        public virtual void OnDidReceiveRefreshOutline(string uri, bool bForced)
+        {
+
+        }
+
         public virtual void OnDidReceiveSignatureHelpContext(SignatureHelpContextParams procedureHash)
         {
             
@@ -109,6 +120,14 @@ namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
         public virtual void SendLoadingIssue(LoadingIssueParams parameters)
         {
             this.rpcServer.SendNotification(LoadingIssueNotification.Type, parameters);
+        }
+
+        /// <summary>
+        /// Outline data notification are sent from the server to the client to send data when changing focused document.
+        /// </summary>
+        public virtual void SendOutlineData(RefreshOutlineParams parameters)
+        {
+            rpcServer.SendNotification(RefreshOutlineNotification.Type, parameters);
         }
     }
 }

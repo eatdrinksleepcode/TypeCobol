@@ -6,10 +6,11 @@ using System.Threading.Tasks;
 using TypeCobol.Compiler.CodeModel;
 using TypeCobol.Compiler.Nodes;
 using TypeCobol.Compiler.Parser;
+using TypeCobol.Compiler.Scanner;
 
 namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
 {
-    class OutlineNode
+    public class OutlineNode
     {
         /// <summary>
         /// The ID of the node
@@ -39,7 +40,7 @@ namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
         /// <summary>
         /// The line where the node begins
         /// </summary>
-        public string line;
+        public int line;
 
         public bool isUpdated = false;
 
@@ -56,13 +57,20 @@ namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
             this.parentId = parent?.id;
             this.parentName = node.Parent?.Name;
 
-            if (node is Sentence)
+            var tokensLine = node.Lines.OfType<TokensLine>().FirstOrDefault(l => l.ScanState.InsideFormalizedComment == false && l.ScanState.InsideMultilineComments == false && l.IndicatorChar != '*');
+
+            if (tokensLine != null)
             {
-                this.line = node.Children.First(c => c.CodeElement != null).CodeElement.Line.ToString();
+                this.line = tokensLine.LineIndex + 1;
+            }
+            else if (node is Sentence)
+            {
+                ReplaceBy(new OutlineNode(node.Children.First(c => c.CodeElement != null), parent));
+                return;
             }
             else
             {
-                this.line = node.CodeElement?.Line.ToString() ?? "";
+                this.line = node.CodeElement?.Line ?? 0;
             }
 
             var childOutlineNodes = new List<OutlineNode>();
@@ -99,22 +107,32 @@ namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
                     {
                         this.childNodes.Insert(i, new OutlineNode(node.Children[i], this));
                         this.childNodes[i].isUpdated = true;
+                        continue;
                     }
+                    break;
                 }
-                else if (this.childNodes[i].DerivativeFrom(node.Children[i]))
-                {
-                    this.childNodes[i].isUpdated = this.childNodes[i].Update(node.Children[i]);
 
-                    if (node.Children[i] is Sentence && this.childNodes[i].line != node.Children[i].Children.First(c => c.CodeElement != null).CodeElement.Line.ToString())
+                var derivationNode = this.childNodes[i].DerivativeFrom(node.Children[i]);
+
+                if (derivationNode != null)
+                {
+                    if (derivationNode.Parent is Sentence == false)
+                        this.childNodes[i].isUpdated = this.childNodes[i].Update(node.Children[i]);
+
+                    var tokensLine = derivationNode.Lines.OfType<TokensLine>().FirstOrDefault(l => l.ScanState.InsideFormalizedComment == false && l.ScanState.InsideMultilineComments == false && l.IndicatorChar != '*');
+                    if (tokensLine != null && this.childNodes[i].line != tokensLine.LineIndex)
                     {
-                        this.childNodes[i].line = node.Children[i].Children.First(c => c.CodeElement != null).CodeElement.Line.ToString();
+                        this.childNodes[i].line = tokensLine.LineIndex + 1;
                         this.childNodes[i].isUpdated = true;
                     }
-                    else if (node.Children[i].CodeElement == null && this.childNodes[i].line == "" || node.Children[i].CodeElement != null && this.childNodes[i].line != node.Children[i].CodeElement.Line.ToString())
+                    else if (node.Children[i].CodeElement != null && this.childNodes[i].line != derivationNode.CodeElement.Line || 
+                        node.Children[i].CodeElement == null && this.childNodes[i].line != 0)
                     {
-                        this.childNodes[i].line = node.Children[i].CodeElement?.Line.ToString() ?? "";
+                        this.childNodes[i].line = derivationNode.CodeElement?.Line ?? 0;
                         this.childNodes[i].isUpdated = true;
                     }
+
+
                 }
                 else
                 {
@@ -129,15 +147,37 @@ namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
             return this.isUpdated || this.childNodes.Any(c => c.isUpdated);
         }
 
-        public bool DerivativeFrom(Node node)
+        public Node DerivativeFrom(Node node)
         {
             if (this.name == node.Name && 
                 this.type == node.GetType().Name &&
                 this.parentName == node.Parent.Name)
             {
-                return true;
+                return node;
             }
-            return false;
+
+            foreach (var child in node.Children)
+            {
+                Node derivativeNode = DerivativeFrom(child);
+
+                if (derivativeNode != null)
+                {
+                    return derivativeNode;
+                }
+            }
+
+            return null;
+        }
+
+        public void ReplaceBy(OutlineNode node)
+        {
+            this.id = node.id;
+            this.name = node.name;
+            this.type = node.type;
+            this.childNodes = node.childNodes;
+            this.line = node.line;
+            this.parentId = node.parentId;
+            this.parentName = node.parentName;
         }
     }
 }
