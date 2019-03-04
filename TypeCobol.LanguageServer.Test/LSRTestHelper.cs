@@ -107,14 +107,14 @@ namespace TypeCobol.LanguageServer.Test
             process.WaitForExit(LSR_TEST_TIMEOUT);
             if (!process.HasExited)
             {
-                System.Console.WriteLine("!!!! TC-LSP PROCESS KILLED !!!");
                 process.Kill();
+                throw new Exception("!!!! TC-LSP PROCESS KILLED !!!");
             }
             else
             {
                 if (process.ExitCode != 0 && process.ExitCode != 1)
                 {
-                    System.Console.WriteLine("!!!! TC-LSP PROCESS EXIT CODE" + process.ExitCode);
+                    throw new Exception("!!!! TC-LSP PROCESS EXIT CODE" + process.ExitCode);
                 }
             }
 

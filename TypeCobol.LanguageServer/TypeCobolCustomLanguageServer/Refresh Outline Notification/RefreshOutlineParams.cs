@@ -10,9 +10,9 @@ namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
     public class RefreshOutlineParams
     {
         /// <summary>
-        /// The Text Document URI
+        /// The Text Document
         /// </summary>
-        public string uri;
+        public TextDocumentIdentifier textDocument { get; set; }
 
 
         /// <summary>
@@ -25,9 +25,9 @@ namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
         /// </summary>
         /// <param name="uri">The Document's identifier</param>
         /// <param name="rootOutlineNode">The List of concerned OutlineNode</param>
-        public RefreshOutlineParams(string uri, OutlineNode rootOutlineNode)
+        public RefreshOutlineParams(TextDocumentIdentifier textDocument, OutlineNode rootOutlineNode)
         {
-            this.uri = uri;
+            this.textDocument = textDocument;
             this.outlineNodes = rootOutlineNode.childNodes;
         }
     }

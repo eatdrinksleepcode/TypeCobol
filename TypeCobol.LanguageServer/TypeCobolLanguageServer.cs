@@ -163,11 +163,10 @@ namespace TypeCobol.LanguageServer
             if(_rootOutlineNode == null)
             {
                 _rootOutlineNode = new OutlineNode(programClassDocument.Root);
-                return new RefreshOutlineParams(this.LspTextDocument.uri, _rootOutlineNode);
             }
 
-            if (_rootOutlineNode.Update(programClassDocument.Root) || bForced)
-                return new RefreshOutlineParams(this.LspTextDocument.uri, _rootOutlineNode);
+            if (bForced || _rootOutlineNode.Update(programClassDocument.Root))
+                return new RefreshOutlineParams(new TextDocumentIdentifier(this.LspTextDocument.uri), _rootOutlineNode);
             else
                 return null;
         }

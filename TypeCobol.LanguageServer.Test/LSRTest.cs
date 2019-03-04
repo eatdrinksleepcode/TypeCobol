@@ -319,6 +319,12 @@ namespace TypeCobol.LanguageServer.Test
         }
 
         [TestMethod]
+        public void OnOutlineRefresh()
+        {
+            LSRTestHelper.Test("OutlineRefresh", LsrTestingOptions.NoLsrTesting, true);
+        }
+
+        [TestMethod]
         public void LSRAutoReplaceSecurityTest()
         {
             if (CLI.Test.UnitTestHelper.CompareDirectory(null, null, "TypeCobol.LanguageServer.Test\\LSRTests"))

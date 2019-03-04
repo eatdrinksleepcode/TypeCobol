@@ -346,6 +346,7 @@ namespace TypeCobol.LanguageServer
                 tdcce.text = parameters.text;
                 dctdp.contentChanges = new TextDocumentContentChangeEvent[] {tdcce};
                 OnDidChangeTextDocument(dctdp);
+                OnDidReceiveRefreshOutline(parameters.textDocument.uri, true);
             }
         }
 
