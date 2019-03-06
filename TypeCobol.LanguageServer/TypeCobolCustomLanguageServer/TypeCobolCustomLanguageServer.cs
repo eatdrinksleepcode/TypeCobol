@@ -89,11 +89,11 @@ namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
         }
 
         /// <summary>
-        /// The Node Refresh notification is sent from the client to the server 
-        /// It will force the server to do a Node Phase analyze. 
+        /// The refresh Outline notification is received for each document modification 
+        /// It will update the main OutlineNode with the new information. 
         /// </summary>
         /// <param name="uri"></param>
-        /// <param name="bForced"></param>
+        /// <param name="bForced">Force the server to send the program OutlineNodes</param>
         public virtual void OnDidReceiveRefreshOutline(string uri, bool bForced)
         {
 
