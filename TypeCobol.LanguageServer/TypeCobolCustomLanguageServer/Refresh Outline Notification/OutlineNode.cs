@@ -172,7 +172,7 @@ namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
                     {
                         string[] parameters = substring.Split(':');
                         string[] s = parameters[1].Split(',');
-                        switch (parameters[0])
+                        switch (parameters[0].Trim())
                         {
                             case "in":
                                 if (!CheckArguments(s, fun.Profile.InputParameters))
@@ -213,7 +213,7 @@ namespace TypeCobol.LanguageServer.TypeCobolCustomLanguageServerProtocol
             {
                 for (int i = 0; i < parameters.Length; i++)
                 {
-                    if (parameters[i] != nodeParameters[i].Name)
+                    if (parameters[i].Trim() != nodeParameters[i].Name)
                     {
                         return false;
                     }
