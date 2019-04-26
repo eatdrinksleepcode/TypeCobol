@@ -411,7 +411,7 @@ namespace TypeCobol.Codegen.Generators
         /// 
         /// </summary>
         /// <param name="clonedMapper">The Linear Source Code Mapper contains the GlobalStorage Section.</param>
-        /// <param name="Input"></param>
+        /// <param name="Input">The list of program input lines</param>
         /// <returns>The Whole Staked Program source code</returns>
         private string GenerateGlobalStorageSectionStackedProgram<A>(LinearNodeSourceCodeMapper clonedMapper, IReadOnlyList<A> Input) where A : ITextLine
         {
