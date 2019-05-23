@@ -201,7 +201,7 @@ namespace TypeCobol.Compiler.CodeElements
                     {
                         var it = consumedToken as ImportedToken;
                         CopyDirective copyDirective = it != null ? it.CopyDirective : null;
-                        if (copyDirective != firstSource)
+                        if (copyDirective != firstSource && consumedToken is ReplacedToken == false)
                         {
                             _isAcrossSourceFile = true;
                             _isInsideCopy = true;
@@ -368,6 +368,5 @@ namespace TypeCobol.Compiler.CodeElements
     public interface ITypedCodeElement
     {
         DataType DataType { get; }
-        int Length { get; }
     }
 }
