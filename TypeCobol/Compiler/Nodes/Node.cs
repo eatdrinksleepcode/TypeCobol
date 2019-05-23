@@ -88,7 +88,7 @@ namespace TypeCobol.Compiler.Nodes {
         /// Some interresting flags. Note each flag must be a power of 2
         /// for instance: 0x1 << 0; 0x01 << 1; 0x01 << 2 ... 0x01 << 32
         /// </summary>
-        public enum Flag : uint
+        public enum Flag : ulong
         {
             /// <summary>
             /// Flag that indicates that the node has been visited for Type Cobol Qualification style detection.
@@ -215,22 +215,23 @@ namespace TypeCobol.Compiler.Nodes {
             /// Indicate the node who is inserted by the codegen to indicate the COPY node.
             /// </summary>
             IsTypedefCopyNode = 0x01 << 29,
+            /// <summary>
             /// Mark a program that should generate its procedure as nested pgm.
             /// </summary>
             GenerateAsNested = 0x01 << 30,
             /// <summary>
             /// Codegen Ignore comment action on this node.
             /// </summary>
-            IgnoreCommentAction = 0x01 << 31,
+            IgnoreCommentAction = 0x01UL << 31,
             /// <summary>
             /// Codegen node is cloned.
             /// </summary>
             IsCloned = 0x01 << 32,
         };
         /// <summary>
-        /// A 32 bits value for flags associated to this Node
+        /// A 64 bits value for flags associated to this Node
         /// </summary>
-        public uint Flags 
+        public ulong Flags 
         { 
             get; 
             internal set; 
@@ -243,7 +244,7 @@ namespace TypeCobol.Compiler.Nodes {
         /// <returns>true if the flag is set, false otherwise</returns>
         public bool IsFlagSet(Flag flag)
         {
-            return (Flags & (uint)flag) != 0;
+            return (Flags & (ulong)flag) != 0;
         }
 
         /// <summary>
@@ -254,7 +255,7 @@ namespace TypeCobol.Compiler.Nodes {
         /// <param name="bRecurse">True if the setting must be recursive over the Children</param>
         public void SetFlag(Flag flag, bool value, bool bRecurse = false)
         {            
-            Flags = value  ? (Flags | (uint)flag) : (Flags & ~(uint)flag);
+            Flags = value  ? (Flags | (ulong)flag) : (Flags & ~(ulong)flag);
             if (bRecurse)
             {
                 foreach (var child in children)
@@ -264,7 +265,7 @@ namespace TypeCobol.Compiler.Nodes {
             }
         }
 
-        public void CopyFlags(uint flag) { Flags = flag; }
+        public void CopyFlags(ulong flag) { Flags = flag; }
 
         /// <summary>
         /// Used by the Generator to specify a Layout the current Node

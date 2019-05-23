@@ -314,7 +314,7 @@ namespace TypeCobol.Codegen.Generators
         /// </summary>
         protected virtual SourceText LinearGeneration<A>(LinearNodeSourceCodeMapper mapper, IReadOnlyList<A> Input, LinearNodeSourceCodeMapper clonedMapper = null) where A : ITextLine
         {
-            return LinearGeneration<A>(mapper, cloned Input, null, 0, mapper.LineData.Length);
+            return LinearGeneration<A>(mapper, clonedMapper, Input, null, 0, mapper.LineData.Length);
         }
 
         /// <summary>
@@ -347,7 +347,7 @@ namespace TypeCobol.Codegen.Generators
             //For detecting line having characters in columns [73-80]
             Lines_73_80_Flags = new HashSet<int>();
             //The previous line generation buffer 
-            StringSourceText previousBuffer = null;
+            LineStringSourceText previousBuffer = null;
             bool insideMultilineComments = false;
             for (int i = startLine; i < endLine; i++)
             {
@@ -713,7 +713,7 @@ namespace TypeCobol.Codegen.Generators
             Node lastNode = null;
             clonedMapper.GetAfterLinearizationLastLine(clonedMapper.ClonedGlobalStorageSection, ref lastLine, ref lastNode);
 
-            SourceText gsSrcText = LinearGeneration(clonedMapper, null, Input, clonedMapper.ClonedGlobalStorageSection.CodeElement.Line - 1,
+            SourceText gsSrcText = LinearGeneration(clonedMapper, null, Input, null, clonedMapper.ClonedGlobalStorageSection.CodeElement.Line - 1,
                 lastLine);
             string gsText = gsSrcText.GetTextAt(0, gsSrcText.Size);
             //Allocate a scanner to reparse and change increments level
