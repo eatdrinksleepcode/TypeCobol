@@ -226,7 +226,7 @@ namespace TypeCobol.Compiler.Nodes {
             /// <summary>
             /// Codegen node is cloned.
             /// </summary>
-            IsCloned = 0x01 << 32,
+            IsCloned = 0x01L << 32,
         };
         /// <summary>
         /// A 64 bits value for flags associated to this Node
