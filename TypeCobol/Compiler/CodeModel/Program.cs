@@ -122,7 +122,10 @@ namespace TypeCobol.Compiler.CodeModel
 
 
         // -- PROCEDURE DIVISION --
-
+        /// <summary>
+        /// Signales if the program uses a variable form the Global Storage Section
+        /// </summary>
+        public bool UseGlobalStorageVariable { get; set; }
 
         // -- NESTED PROGRAMs --
 

@@ -161,6 +161,11 @@ namespace TypeCobol.Compiler.Nodes {
         }
 
         public Dictionary<string, Tuple<IList<SymbolReference>, ProcedureStyleCall>> ProcStyleCalls { get; set; }
+
+        /// <summary>
+        /// Signales if the program uses a variable form the Global Storage Section
+        /// </summary>
+        public bool UseGlobalStorageVariable { get; set; }
     }
 
     public class FunctionEnd: GenericNode<FunctionDeclarationEnd> {

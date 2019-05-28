@@ -64,6 +64,7 @@ namespace TypeCobol.Compiler.Diagnostics
         {
             FunctionDeclarationChecker.OnNode(functionDeclaration);
             CheckMultipleFormComParam(functionDeclaration.CodeElement);
+            functionDeclaration.UseGlobalStorageVariable = IsGlobalStorageVariableUsed(functionDeclaration.Children.FirstOrDefault(c => c is ProcedureDivision));
             return true;
         }
 
@@ -260,6 +261,8 @@ namespace TypeCobol.Compiler.Diagnostics
                     }
                 }
             }
+
+            program.UseGlobalStorageVariable = IsGlobalStorageVariableUsed(program.Children.FirstOrDefault(c => c is ProcedureDivision));
 
             return true;
         }
@@ -624,6 +627,47 @@ namespace TypeCobol.Compiler.Diagnostics
 
             if (!node.QualifiedStorageAreas.ContainsKey(storageArea))
                 node.QualifiedStorageAreas.Add(storageArea, dataDefinitionPath);
+        }
+
+        private bool IsGlobalStorageVariableUsed(Node node)
+        {
+            if (node != null)
+            {
+                CodeElement ce = null;
+                foreach (Node child in node.Children.Where(c => c is FunctionDeclaration == false))
+                {
+                    if (child.CodeElement != null)
+                    {
+                        ce = child.CodeElement;
+                        if (ce.StorageAreaWrites != null)
+                        {
+                            foreach (var dataDefinition in ce.StorageAreaWrites)
+                            {
+                                if (child.SymbolTable.GetTableFromScope(SymbolTable.Scope.GlobalStorage).GetVariables(dataDefinition.MainSymbolReference).Any())
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+
+                        if (ce.StorageAreaReads != null)
+                        {
+                            foreach (var dataDefinition in ce.StorageAreaReads)
+                            {
+                                if (child.SymbolTable.GetTableFromScope(SymbolTable.Scope.GlobalStorage).GetVariables(dataDefinition.SymbolReference).Any())
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (IsGlobalStorageVariableUsed(child))
+                        return true;
+                }
+            }
+
+            return false;
         }
     }
     
