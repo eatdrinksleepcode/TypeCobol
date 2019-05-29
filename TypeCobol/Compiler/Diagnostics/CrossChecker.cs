@@ -629,39 +629,42 @@ namespace TypeCobol.Compiler.Diagnostics
                 node.QualifiedStorageAreas.Add(storageArea, dataDefinitionPath);
         }
 
+        /// <summary>
+        /// Check if the children of the node are using any global storage variable
+        /// </summary>
+        /// <param name="node">The current node</param>
+        /// <returns>True if the children of the node are using a global storage variable, false otherwise</returns>
         private bool IsGlobalStorageVariableUsed(Node node)
         {
             if (node != null)
             {
-                CodeElement ce = null;
+                //Exclude Function declaration because a program that declares a FunctionDeclaration using a global storage variable is not using a global storage variable
                 foreach (Node child in node.Children.Where(c => c is FunctionDeclaration == false))
                 {
                     if (child.CodeElement != null)
                     {
-                        ce = child.CodeElement;
+                        var ce = child.CodeElement;
+                        IEnumerable<SymbolReference> symbolReferences = new List<SymbolReference>();
+
+                        //Concat symbol references used in the program
                         if (ce.StorageAreaWrites != null)
-                        {
-                            foreach (var dataDefinition in ce.StorageAreaWrites)
-                            {
-                                if (child.SymbolTable.GetTableFromScope(SymbolTable.Scope.GlobalStorage).GetVariables(dataDefinition.MainSymbolReference).Any())
-                                {
-                                    return true;
-                                }
-                            }
-                        }
+                            symbolReferences = symbolReferences.Concat(ce.StorageAreaWrites.Select(saw => saw.MainSymbolReference));
 
                         if (ce.StorageAreaReads != null)
+                            symbolReferences = symbolReferences.Concat(ce.StorageAreaReads.Select(sar => sar.SymbolReference));
+
+                        foreach (var symbolReference in symbolReferences)
                         {
-                            foreach (var dataDefinition in ce.StorageAreaReads)
+                            //Get the global storage symbol table
+                            SymbolTable globalStorageTable = child.SymbolTable.GetTableFromScope(SymbolTable.Scope.GlobalStorage);
+                            if (globalStorageTable != null && globalStorageTable.GetVariables(symbolReference).Any())
                             {
-                                if (child.SymbolTable.GetTableFromScope(SymbolTable.Scope.GlobalStorage).GetVariables(dataDefinition.SymbolReference).Any())
-                                {
-                                    return true;
-                                }
+                                return true;
                             }
                         }
                     }
 
+                    //Recurse on all children
                     if (IsGlobalStorageVariableUsed(child))
                         return true;
                 }
