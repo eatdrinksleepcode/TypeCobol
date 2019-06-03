@@ -653,7 +653,8 @@ namespace TypeCobol.Compiler.Diagnostics
                         if (ce.StorageAreaReads != null)
                             symbolReferences = symbolReferences.Concat(ce.StorageAreaReads.Select(sar => sar.SymbolReference));
 
-                        foreach (var symbolReference in symbolReferences)
+                        //Get only the Symbol References that are not null (can happen if we start writting a qualified variable)
+                        foreach (var symbolReference in symbolReferences.Where(sr => sr != null))
                         {
                             //Get the global storage symbol table
                             SymbolTable globalStorageTable = child.SymbolTable.GetTableFromScope(SymbolTable.Scope.GlobalStorage);
