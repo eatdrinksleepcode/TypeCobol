@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -732,10 +732,10 @@ namespace TypeCobol.Codegen.Generators
             //So Here we can relocate Global Storage Line Mapping
             if (lmCtx != null)
             {
-                for (int i = FirstGSLine; i <= LastGSLine; i++)
+                for (int i = FirstGSLine; i < LastGSLine; i++)
                 {
-                    int firstLine = lmCtx.LineMapping[i].Item1;
-                    int lastLine = lmCtx.LineMapping[i].Item2;
+                    int firstLine = GSLmCtx.LineMapping[i].Item1;
+                    int lastLine = GSLmCtx.LineMapping[i].Item2;
                     lmCtx.LineMapping[i] = new Tuple<int, int>(firstLine + lmCtx.startLineMapCounter + GSLineOffset - 1, lastLine + lmCtx.startLineMapCounter + GSLineOffset - 1);
                 }
             }
@@ -794,7 +794,7 @@ namespace TypeCobol.Codegen.Generators
 
             if (lmCtx != null)
             {                
-                GSLmCtx = new LineMappingCtx(lmCtx.LineMapping);
+                GSLmCtx = new LineMappingCtx(new Tuple<int, int>[lmCtx.LineMapping.Length]);
             }
             SourceText gsSrcText = LinearGeneration(clonedMapper, null, Input, GSLmCtx, FirstGSLine = clonedMapper.ClonedGlobalStorageSection.CodeElement.Line - 1,
                 LastGSLine = lastLine);
