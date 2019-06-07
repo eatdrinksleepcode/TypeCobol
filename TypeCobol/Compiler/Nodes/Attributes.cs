@@ -231,11 +231,11 @@ namespace TypeCobol.Compiler.Nodes {
         {
             if (o is Program pgm)
             {
-                return pgm.UseGlobalStorageVariable;
+                return pgm.IsFlagSet(Node.Flag.UseGlobalStorage);
             }
             else if (o is FunctionDeclaration fun)
             {
-                return fun.UseGlobalStorageVariable;
+                return fun.IsFlagSet(Node.Flag.UseGlobalStorage);
             }
             
             else

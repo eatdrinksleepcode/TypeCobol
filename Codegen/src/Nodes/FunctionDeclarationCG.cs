@@ -51,7 +51,7 @@ namespace TypeCobol.Codegen.Nodes {
                     var pdiv = new ProcedureDivision(originalNode, sentences);
                     children.Add(pdiv);
 
-                    if (originalNode.UseGlobalStorageVariable)
+                    if (originalNode.IsFlagSet(Node.Flag.UseGlobalStorage))
                     {
                         dataDivision = GetOrCreateNode<Compiler.Nodes.DataDivision>(originalNode, () => new DataDivision());
                         (linkageSection ?? GetOrCreateNode<Compiler.Nodes.LinkageSection>(dataDivision, () => new LinkageSection(originalNode), dataDivision)).Add(new GlobalStorage.GlobalStorageNode());
@@ -73,7 +73,7 @@ namespace TypeCobol.Codegen.Nodes {
                         workingStorageSection.AddRange(toAddRange, 0);
                         GenerateCodeToCallPublicProc(originalNode, pdiv,  workingStorageSection, linkageSection);
                     }
-                    else if (OriginalNode.UseGlobalStorageVariable)
+                    else if (OriginalNode.IsFlagSet(Node.Flag.UseGlobalStorage))
                     {
                         Node[] toAddRange =
                         {
@@ -195,7 +195,7 @@ namespace TypeCobol.Codegen.Nodes {
                     new GeneratedNode2("*=================================================================", true));
                 procedureDivision.Add(new GeneratedNode2("     IF TC-FirstCall", true));
                 procedureDivision.Add(new GeneratedNode2("          SET TC-NthCall TO TRUE", true));
-                if (OriginalNode.UseGlobalStorageVariable)
+                if (OriginalNode.IsFlagSet(Node.Flag.UseGlobalStorage))
                 {
                     Node[] globalCalltoAddRange =
                     {

@@ -113,6 +113,7 @@
   <ItemGroup>
     <Compile Include="**\*.cs" />
     <Content Include="Parser\**\*" Exclude="Parser\**\*.cs" />
+    <Content Include="Parser\Programs\TypeCobol\GlobalStorageReference.rdz.tcbl" />
     <None Include="Report\Input\**">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -123,6 +124,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Content Include="NewTestsToFix\**" />
+    <Content Include="Parser\Programs\TypeCobol\GlobalStorageReference.rdzPGM.txt" />
     <Content Include="ThirdParty\**" />
     <Content Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
