@@ -1,4 +1,4 @@
-﻿using JetBrains.Annotations;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -352,6 +352,15 @@ namespace TypeCobol.Compiler.Diagnostics
                 return true;
             }
 
+            if (dataDefinition.Parent is GlobalStorageSection == false)
+            {
+                if (IsGlobalStorageVariableUsed(dataDefinition))
+                {
+                    DiagnosticUtils.AddError(dataDefinition,
+                        "A Global-Storage Section variable cannot be referenced in another Data Section");
+                }
+            }
+
             DataDefinitionChecker.OnNode(dataDefinition);
 
             return true;
@@ -638,12 +647,9 @@ namespace TypeCobol.Compiler.Diagnostics
         {
             if (node != null)
             {
-                //Exclude Function declaration because a program that declares a FunctionDeclaration using a global storage variable is not using a global storage variable
-                foreach (Node child in node.Children.Where(c => c is FunctionDeclaration == false))
+                if (node.CodeElement != null)
                 {
-                    if (child.CodeElement != null)
-                    {
-                        var ce = child.CodeElement;
+                    var ce = node.CodeElement;
                         IEnumerable<SymbolReference> symbolReferences = new List<SymbolReference>();
 
                         //Concat symbol references used in the program
@@ -657,7 +663,7 @@ namespace TypeCobol.Compiler.Diagnostics
                         foreach (var symbolReference in symbolReferences.Where(sr => sr != null))
                         {
                             //Get the global storage symbol table
-                            SymbolTable globalStorageTable = child.SymbolTable.GetTableFromScope(SymbolTable.Scope.GlobalStorage);
+                        SymbolTable globalStorageTable = node.SymbolTable.GetTableFromScope(SymbolTable.Scope.GlobalStorage);
                             if (globalStorageTable != null && globalStorageTable.GetVariables(symbolReference).Any())
                             {
                                 return true;
@@ -665,6 +671,9 @@ namespace TypeCobol.Compiler.Diagnostics
                         }
                     }
 
+                //Exclude Function declaration because a program that declares a FunctionDeclaration using a global storage variable is not using a global storage variable
+                foreach (Node child in node.Children.Where(c => c is FunctionDeclaration == false))
+                {
                     //Recurse on all children
                     if (IsGlobalStorageVariableUsed(child))
                         return true;
