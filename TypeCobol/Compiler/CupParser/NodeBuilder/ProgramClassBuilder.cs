@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using TypeCobol.Compiler.CodeElements;
@@ -50,54 +51,16 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
         /// <summary>Class object resulting of the visit the parse tree</summary>
         public CodeModel.Class Class { get; private set; }
 
-        private readonly SymbolTable TableOfIntrinsics;
-        private readonly SymbolTable TableOfNamespaces;
+        private readonly SymbolTable _rootSymbolTable;
 
-        public ProgramClassBuilder()
+        public ProgramClassBuilder(SymbolTable rootSymbolTable)
         {
-            // Intrinsics and Namespaces always exist. Intrinsic table has no enclosing scope.
-            TableOfIntrinsics = new SymbolTable(null, SymbolTable.Scope.Intrinsic);
-            TableOfNamespaces = new SymbolTable(TableOfIntrinsics, SymbolTable.Scope.Namespace);
+            Debug.Assert(rootSymbolTable != null);
+            Debug.Assert(rootSymbolTable.CurrentScope == SymbolTable.Scope.Namespace);
 
+            _rootSymbolTable = rootSymbolTable;
             programsStack = new Stack<Program>();
         }
-
-        public SymbolTable CustomSymbols
-        {
-            set
-            {
-                if (value != null)
-                {
-                    SymbolTable intrinsicTable = value.GetTableFromScope(SymbolTable.Scope.Intrinsic);
-                    SymbolTable nameSpaceTable = value.GetTableFromScope(SymbolTable.Scope.Namespace);
-
-                    intrinsicTable.DataEntries.Values.ToList().ForEach(d => d.ForEach(da => da.SetFlag(Node.Flag.NodeIsIntrinsic, true)));
-                    intrinsicTable.Types.Values.ToList().ForEach(d => d.ForEach(da => da.SetFlag(Node.Flag.NodeIsIntrinsic, true)));
-                    intrinsicTable.Functions.Values.ToList().ForEach(d => d.ForEach(da => da.SetFlag(Node.Flag.NodeIsIntrinsic, true)));
-
-                    TableOfIntrinsics.CopyAllDataEntries(intrinsicTable.DataEntries.Values);
-                    TableOfIntrinsics.CopyAllTypes(intrinsicTable.Types);
-                    TableOfIntrinsics.CopyAllFunctions(intrinsicTable.Functions, AccessModifier.Public);
-
-                    if (nameSpaceTable != null)
-                    {
-                        TableOfNamespaces.CopyAllPrograms(nameSpaceTable.Programs.Values);
-                    }
-
-                }
-
-                // TODO#249: use a COPY for these
-                foreach (var type in DataType.BuiltInCustomTypes)
-                {
-                    var createdType = DataType.CreateBuiltIn(type);
-                    TableOfIntrinsics.AddType(createdType); //Add default TypeCobol types BOOLEAN and DATE
-                    //Add type and children to DataTypeEntries dictionary in Intrinsic symbol table
-                    TableOfIntrinsics.AddDataDefinitionsUnderType(createdType);
-                }
-            }
-        }
-
-
 
         public ProgramClassBuilderNodeDispatcher Dispatcher { get; internal set; }
 
@@ -204,7 +167,7 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
 
         public virtual void StartCobolCompilationUnit()
         {
-            SyntaxTree.Root.SymbolTable = TableOfNamespaces; //Set SymbolTable of SourceFile Node, Limited to NameSpace and Intrinsic scopes
+            SyntaxTree.Root.SymbolTable = _rootSymbolTable; //Set SymbolTable of SourceFile Node, Limited to NameSpace and Intrinsic scopes
             Dispatcher.StartCobolCompilationUnit();
         }
 
@@ -215,14 +178,14 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
                 if (SyntaxTree.Root.MainProgram == null)
                 {
                     // Main
-                    var mainProgram = new SourceProgram(TableOfNamespaces, programIdentification);
+                    var mainProgram = new SourceProgram(_rootSymbolTable, programIdentification);
                     SyntaxTree.Root.MainProgram = mainProgram;
                     CurrentProgram = mainProgram;
                 }
                 else
                 {
                     // Stacked
-                    CurrentProgram = new StackedProgram(TableOfNamespaces, programIdentification);
+                    CurrentProgram = new StackedProgram(_rootSymbolTable, programIdentification);
                 }
             }
             else
@@ -240,7 +203,7 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
                 Exit();
             }
 
-            TableOfNamespaces.AddProgram(CurrentProgram); //Add Program to Namespace table. 
+            _rootSymbolTable.AddProgram(CurrentProgram); //Add Program to Namespace table. 
             Dispatcher.StartCobolProgram(programIdentification, libraryCopy);
         }
 

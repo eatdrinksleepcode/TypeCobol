@@ -24,13 +24,10 @@ namespace TypeCobol.Tools.APIHelpers
 
         public static SymbolTable LoadIntrinsic(List<string> paths, DocumentFormat intrinsicDocumentFormat, EventHandler<DiagnosticsErrorEvent> diagEvent)
         {
-            var parser = new Parser();
-            var table = new SymbolTable(null, SymbolTable.Scope.Intrinsic);
-            var instrincicFiles = new List<string>();
+            var symbolTableResult = new SymbolTable(null, SymbolTable.Scope.Intrinsic);
+            var parser = new Parser(symbolTableResult);
 
-            foreach (string path in paths) instrincicFiles.AddRange(FileSystem.GetFiles(path, DEFAULT_EXTENSIONS, false));
-
-            foreach (string path in instrincicFiles)
+            foreach (string path in paths.SelectMany(path => FileSystem.GetFiles(path, DEFAULT_EXTENSIONS, false)))
             {
                 try
                 {
@@ -46,9 +43,9 @@ namespace TypeCobol.Tools.APIHelpers
                         }
                     }
 
-                    if (parser.Results.ProgramClassDocumentSnapshot.Root.Programs == null || parser.Results.ProgramClassDocumentSnapshot.Root.Programs.Count() == 0)
+                    if (parser.Results.ProgramClassDocumentSnapshot.Root.Programs == null || parser.Results.ProgramClassDocumentSnapshot.Root.Programs.Any())
                     {
-                        throw new CopyLoadingException("Your Intrisic types/functions are not included into a program.", path, null, logged: true, needMail: false);
+                        throw new CopyLoadingException("Your Intrinsic types/functions are not included into a program.", path, null, logged: true, needMail: false);
                     }
 
                     foreach (var program in parser.Results.ProgramClassDocumentSnapshot.Root.Programs)
@@ -58,23 +55,16 @@ namespace TypeCobol.Tools.APIHelpers
                         if (symbols.Types.Count == 0 && symbols.Functions.Count == 0)
                         {
                             diagEvent?.Invoke(null, new DiagnosticsErrorEvent() { Path = path, Diagnostic = new ParserDiagnostic("No types and no procedures/functions found", 1, 1, 1, null, MessageCode.Warning) });
-                            continue;
                         }
-
-                        table.CopyAllTypes(symbols.Types);
-                        table.CopyAllFunctions(symbols.Functions);
                     }
-                }
-                catch (CopyLoadingException copyException)
-                {
-                    throw copyException;
                 }
                 catch (Exception e)
                 {
                     throw new CopyLoadingException(e.Message + "\n" + e.StackTrace, path, e, logged: true, needMail: true);
                 }
             }
-            return table;
+
+            return symbolTableResult;
         }
 
         /// <summary>
@@ -157,8 +147,6 @@ namespace TypeCobol.Tools.APIHelpers
 
             foreach (string path in dependencies)
             {
-
-
 #if EUROINFO_RULES
                 //Issue #583, ignore a dependency if the same file will be parsed as an input file just after
 
@@ -209,12 +197,6 @@ namespace TypeCobol.Tools.APIHelpers
 
                     foreach (var program in parsingResult.TemporaryProgramClassDocumentSnapshot.Root.Programs)
                     {
-                        var previousPrograms = table.GetPrograms();
-                        foreach (var previousProgram in previousPrograms)
-                        {
-                            previousProgram.SymbolTable.GetTableFromScope(SymbolTable.Scope.Namespace).AddProgram(program);
-                        }
-
                         //If there is no public types or functions, then call diagEvent
                         var programTable = program.SymbolTable.GetTableFromScope(SymbolTable.Scope.Program);
                         if (diagEvent != null
@@ -224,22 +206,13 @@ namespace TypeCobol.Tools.APIHelpers
                             diagEvent(null, new DiagnosticsErrorEvent() { Path = path, Diagnostic = new ParserDiagnostic(string.Format("No public types or procedures/functions found in {0}", program.Name), 1, 1, 1, null, MessageCode.Warning) });
                             continue;
                         }
-                        table.AddProgram(program); //Add program to Namespace symbol table
                     }
-                }
-                catch (DepedenciesLoadingException depLoadingEx)
-                {
-                    throw depLoadingEx;
                 }
                 catch (Exception e)
                 {
                     throw new DepedenciesLoadingException(e.Message + "\n" + e.StackTrace, path, e);
                 }
             }
-
-            //Reset symbolTable of all dependencies 
-
-
 
             return table;
         }

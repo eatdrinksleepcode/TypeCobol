@@ -61,12 +61,11 @@ namespace TypeCobol.Compiler.Parser
             CupParser.TypeCobolProgramParser parser = new CupParser.TypeCobolProgramParser(scanner);
             CupParserTypeCobolProgramDiagnosticErrorReporter diagReporter = new CupParserTypeCobolProgramDiagnosticErrorReporter();
             parser.ErrorReporter = diagReporter;
-            ProgramClassBuilder builder = new ProgramClassBuilder();
+            ProgramClassBuilder builder = new ProgramClassBuilder(customSymbols);
             parser.Builder = builder;
             ParserDiagnostic programClassBuilderError = null;
 
             builder.SyntaxTree = new SyntaxTree(); //Initialize SyntaxTree for the current source file
-            builder.CustomSymbols = customSymbols;
             builder.Dispatcher = new ProgramClassBuilderNodeDispatcher();
             builder.Dispatcher.CreateListeners();
 

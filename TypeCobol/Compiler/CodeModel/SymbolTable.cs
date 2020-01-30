@@ -892,38 +892,8 @@ namespace TypeCobol.Compiler.CodeModel
         private List<TypeDefinition> GetType(QualifiedName name, string pgmName, List<TypeDefinition> found = null)
         {
             found = found ?? new List<TypeDefinition>();
-            var programs = GetProgramsHelper(pgmName); //Get the program corresponding to the given namespace
-
-            if (programs != null)
-            {
-                var types = new List<TypeDefinition>();
-                foreach (var program in programs)
-                {
-                    //Get all TYPEDEF PUBLIC from this program
-                    var programTypes = GetPublicTypes(program.SymbolTable.GetTableFromScope(Scope.Program).Types);
-
-                    //Check if there is a type that correspond to the given name (head)
-                    var typeList =  GetFromTable(name.Head, programTypes);
-                    if (typeList.Count > 0) types.AddRange(typeList);
-                }
-
-                return types;
-            }
-
-            return found;
-        }
-
-        /// <summary>
-        /// Get all Public TYPEDEF from the specified SymbolTable
-        /// </summary>
-        /// <param name="programTypes"></param>
-        /// <returns></returns>
-        private static Dictionary<string, List<TypeDefinition>> GetPublicTypes(IDictionary<string, List<TypeDefinition>> programTypes)
-        {
-            return programTypes
-                .Where(p =>
-                    p.Value.All(f => f.CodeElement.Visibility == AccessModifier.Public))
-                .ToDictionary(f => f.Key, f => f.Value, StringComparer.OrdinalIgnoreCase); //Sort types to get only the ones with public AccessModifier
+            var publicTypes = GetPublicSymbols(name, pgmName, st => st.Types, td => td.CodeElement.Visibility).ToList();
+            return publicTypes.Count > 0 ? publicTypes : found;
         }
 
         #endregion
@@ -1048,28 +1018,7 @@ namespace TypeCobol.Compiler.CodeModel
             if (string.IsNullOrEmpty(nameSpace) || result.Count > 0)
                 return result;
 
-            var programs = GetProgramsHelper(nameSpace); //Get the programs corresponding to the given namespace
-            if (programs != null)
-            {
-                result = new List<FunctionDeclaration>();
-                foreach (var program in programs)
-                {
-                    var programFunctions = program.SymbolTable.GetTableFromScope(Scope.Program)
-                            .Functions; //Get all function from this program
-                    programFunctions = programFunctions
-                                        .Where(p =>
-                                               p.Value.All(f => (f.CodeElement).Visibility == AccessModifier.Public))
-                                               .ToDictionary(f => f.Key, f => f.Value, StringComparer.OrdinalIgnoreCase); //Sort functions to get only the one with public AccessModifier
-
-                    var res = GetFromTable(name.Head, programFunctions); //Check if there is a function that correspond to the given name (head)
-                    if (res.Count > 0)
-                    {
-                        result.AddRange(res);
-                    }
-                }
-            }
-
-            return result;
+            return GetPublicSymbols(name, nameSpace, st => st.Functions, fd => fd.CodeElement.Visibility).ToList();
         }
 
         #endregion
@@ -1145,6 +1094,23 @@ namespace TypeCobol.Compiler.CodeModel
             found.Add(symbol);
         }
 
+        private IEnumerable<T> GetPublicSymbols<T>(QualifiedName name, string @namespace, Func<SymbolTable, IDictionary<string, List<T>>> symbolSelector, Func<T, AccessModifier> getVisibility)
+            where T : Node
+        {
+            var programs = GetPrograms(new URI(@namespace));
+            foreach (var program in programs)
+            {
+                var candidates = symbolSelector(program.SymbolTable.GetTableFromScope(Scope.Program));
+                foreach (var candidate in candidates.SelectMany(p => p.Value))
+                {
+                    if (getVisibility(candidate) == AccessModifier.Public && candidate.Name == name.Head)
+                    {
+                        yield return candidate;
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Cobol has compile time binding for variables, sometimes called static scope.
         /// Within that, Cobol supports several layers of scope: Global and Local scope.
@@ -1188,11 +1154,6 @@ namespace TypeCobol.Compiler.CodeModel
             /// TC specific, contains types and variables declared within a procedure.
             /// </summary>
             Function
-        }
-
-        private List<Program> GetProgramsHelper(string nameSpace)
-        {
-            return GetPrograms(new URI(nameSpace));
         }
 
         public override string ToString()

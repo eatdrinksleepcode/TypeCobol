@@ -130,12 +130,6 @@ namespace TypeCobol.Server
                 CollectUsedCopies(parser.Results.CopyTextNamesVariations);
                 CollectMissingCopies(parser.MissingCopys);
 
-                //Add newly discovered programs in the root symbol table
-                if (parser.Results.TemporaryProgramClassDocumentSnapshot != null)
-                {
-                    AddProgramsToRootTable(rootSymbolTable, parser.Results.TemporaryProgramClassDocumentSnapshot.Root.Programs);
-                }
-                
                 //Optionally generate the source with expanded copy (note that it is not supported for multiple files)
                 GenerateExpandingCopyFile(inputFilePath, parser.Results);
             }
@@ -261,26 +255,6 @@ namespace TypeCobol.Server
             }
 
             return reports;
-        }
-
-        private void AddProgramsToRootTable(SymbolTable rootTable, IEnumerable<Program> programs)
-        {
-            if (_configuration.ExecToStep >= ExecutionStep.SemanticCheck)
-            {
-                foreach (var program in programs)
-                {
-                    var previousPrograms = rootTable.GetPrograms();
-                    foreach (var previousProgram in previousPrograms)
-                    {
-                        var namespaceSymbolTable = previousProgram.SymbolTable.GetTableFromScope(SymbolTable.Scope.Namespace);
-                        var foundPrograms = namespaceSymbolTable.Programs.FirstOrDefault(dp => dp.Key ==  program.Name).Value;
-                        if (foundPrograms == null || !foundPrograms.Any(p => p.Equals(program)))
-                            namespaceSymbolTable.AddProgram(program);
-                    }
-
-                    rootTable.AddProgram(program); //Add program to Namespace symbol table
-                }
-            }
         }
 
         private void GenerateExpandingCopyFile(string inputFilePath, CompilationUnit compilationUnit)
@@ -436,7 +410,7 @@ namespace TypeCobol.Server
         private ReturnCode AddErrorsAndComputeReturnCode()
         {
             /*
-             * Here we start with a Sucesss return code, then we check all diagnostics from
+             * Here we start with a Success return code, then we check all diagnostics from
              * lowest to highest priority.
              */
 
@@ -517,7 +491,7 @@ namespace TypeCobol.Server
                 UpdateReturnCode(_intrinsicsDiagnostics.Select(dee => dee.Diagnostic).ToList());
             }
 
-            //Always retrun MissingCopy when there is at least one missing copy because it could help the developer to correct several parsing errors at once
+            //Always return MissingCopy when there is at least one missing copy because it could help the developer to correct several parsing errors at once
             if (_missingCopies.Count > 0)
             {
                 returnCode = ReturnCode.MissingCopy;
