@@ -1103,7 +1103,7 @@ namespace TypeCobol.Compiler.CodeModel
                 var candidates = symbolSelector(program.SymbolTable.GetTableFromScope(Scope.Program));
                 foreach (var candidate in candidates.SelectMany(p => p.Value))
                 {
-                    if (getVisibility(candidate) == AccessModifier.Public && candidate.Name == name.Head)
+                    if (getVisibility(candidate) == AccessModifier.Public && candidate.Name.Equals(name.Head, StringComparison.OrdinalIgnoreCase))
                     {
                         yield return candidate;
                     }

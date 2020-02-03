@@ -25,8 +25,11 @@ namespace TypeCobol.Tools.APIHelpers
         public static SymbolTable LoadIntrinsic(List<string> paths, DocumentFormat intrinsicDocumentFormat, EventHandler<DiagnosticsErrorEvent> diagEvent)
         {
             var symbolTableResult = new SymbolTable(null, SymbolTable.Scope.Intrinsic);
-            var parser = new Parser(symbolTableResult);
+            
 
+            var localTableResult = new SymbolTable(symbolTableResult, SymbolTable.Scope.Namespace);
+
+            var parser = new Parser(localTableResult);
             foreach (string path in paths.SelectMany(path => FileSystem.GetFiles(path, DEFAULT_EXTENSIONS, false)))
             {
                 try
@@ -43,7 +46,7 @@ namespace TypeCobol.Tools.APIHelpers
                         }
                     }
 
-                    if (parser.Results.ProgramClassDocumentSnapshot.Root.Programs == null || parser.Results.ProgramClassDocumentSnapshot.Root.Programs.Any())
+                    if (parser.Results.ProgramClassDocumentSnapshot.Root.Programs == null || !parser.Results.ProgramClassDocumentSnapshot.Root.Programs.Any())
                     {
                         throw new CopyLoadingException("Your Intrinsic types/functions are not included into a program.", path, null, logged: true, needMail: false);
                     }
@@ -56,12 +59,30 @@ namespace TypeCobol.Tools.APIHelpers
                         {
                             diagEvent?.Invoke(null, new DiagnosticsErrorEvent() { Path = path, Diagnostic = new ParserDiagnostic("No types and no procedures/functions found", 1, 1, 1, null, MessageCode.Warning) });
                         }
+
+                        symbolTableResult.CopyAllDataEntries(symbols.DataEntries.Values);
+                        symbolTableResult.CopyAllTypes(symbols.Types);
+                        symbolTableResult.CopyAllFunctions(symbols.Functions, AccessModifier.Public);
                     }
                 }
                 catch (Exception e)
                 {
                     throw new CopyLoadingException(e.Message + "\n" + e.StackTrace, path, e, logged: true, needMail: true);
                 }
+            }
+
+
+            symbolTableResult.DataEntries.Values.ToList().ForEach(d => d.ForEach(da => da.SetFlag(TypeCobol.Compiler.Nodes.Node.Flag.NodeIsIntrinsic, true)));
+            symbolTableResult.Types.Values.ToList().ForEach(d => d.ForEach(da => da.SetFlag(TypeCobol.Compiler.Nodes.Node.Flag.NodeIsIntrinsic, true)));
+            symbolTableResult.Functions.Values.ToList().ForEach(d => d.ForEach(da => da.SetFlag(TypeCobol.Compiler.Nodes.Node.Flag.NodeIsIntrinsic, true)));
+
+            // TODO#249: use a COPY for these
+            foreach (var type in DataType.BuiltInCustomTypes)
+            {
+                var createdType = DataType.CreateBuiltIn(type);
+                symbolTableResult.AddType(createdType); //Add default TypeCobol types BOOLEAN and DATE
+                //Add type and children to DataTypeEntries dictionary in Intrinsic symbol table
+                symbolTableResult.AddDataDefinitionsUnderType(createdType);
             }
 
             return symbolTableResult;
@@ -215,6 +236,12 @@ namespace TypeCobol.Tools.APIHelpers
             }
 
             return table;
+        }
+
+        public static SymbolTable GetDefaultNamespaceSymbolTable()
+        {
+            SymbolTable intrinsicTable = LoadIntrinsic(new List<string>(), DocumentFormat.RDZReferenceFormat, null);
+            return new SymbolTable(intrinsicTable, SymbolTable.Scope.Namespace);
         }
     }
 

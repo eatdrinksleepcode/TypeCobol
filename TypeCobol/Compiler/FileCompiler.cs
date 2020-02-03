@@ -12,6 +12,7 @@ using TypeCobol.Compiler.Preprocessor;
 using TypeCobol.Compiler.Scanner;
 using TypeCobol.Compiler.Text;
 using TypeCobol.Tools;
+using TypeCobol.Tools.APIHelpers;
 
 namespace TypeCobol.Compiler
 {
@@ -183,6 +184,7 @@ namespace TypeCobol.Compiler
             chrono.Reset();
 
             // 3. Prepare the data structures used by the different steps of the compiler
+            if (customSymbols == null) customSymbols = Helpers.GetDefaultNamespaceSymbolTable();
             if (isCopyFile)
             {
                 CompilationResultsForCopy = new CompilationDocument(TextDocument.Source, TextDocument.Lines, compilerOptions, documentProvider, scanState, copyTextNameVariations);
