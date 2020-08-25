@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using TypeCobol.Compiler.Scopes;
+using TypeCobol.Compiler.Types;
 
 namespace TypeCobol.Compiler.Symbols
 {
@@ -44,6 +45,24 @@ namespace TypeCobol.Compiler.Symbols
                 System.Diagnostics.Contracts.Contract.Requires((value >= 1 && value <= 49) || (value == 77) || (value == 88) || (value == 66));
                 m_Level = value;
             }
+        }
+
+        /// <summary>
+        /// Any value associated to this Variable, more often an initial value.
+        /// </summary>
+        public object Value
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// The Offset of this symbol in its hierachy.
+        /// </summary>
+        public int Offset
+        {
+            get;
+            set;
         }
 
         /// <summary>

@@ -87,6 +87,7 @@ namespace TypeCobol.Compiler.Symbols
             IsCyclic = 0x01L << 43,
 
             //Etc...
+
         }
 
         /// <summary>

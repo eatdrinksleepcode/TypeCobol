@@ -1477,7 +1477,10 @@ namespace TypeCobol.Compiler.Domain
                         sym.Level = 88;
                         if (currentDomain.Owner.Kind != Symbol.Kinds.Program && currentDomain.Owner.Kind != Symbol.Kinds.Function)
                             sym.SetFlag(currentDomain.Owner.Flag & Symbol.SymbolVisibilityMask , currentDomain.Owner.HasFlag(Symbol.SymbolVisibilityMask));
-                    }
+                        //Store Contition Values.
+                        sym.Value = ((DataConditionEntry)dataDef.CodeElement).ConditionValues;
+
+                     }
                         break;
                     case CodeElementType.DataRenamesEntry:
                     {
@@ -1490,7 +1493,8 @@ namespace TypeCobol.Compiler.Domain
                     case CodeElementType.DataRedefinesEntry:
                     {
                         CommonDataDescriptionAndDataRedefines dataDescEntry =
-                            (CommonDataDescriptionAndDataRedefines)dataDef.CodeElement;                            
+                            (CommonDataDescriptionAndDataRedefines)dataDef.CodeElement;
+                        sym.Value = dataDescEntry.InitialValue;
                         sym.Level = dataDescEntry.LevelNumber != null ? (int)dataDescEntry.LevelNumber.Value : 0;
                         if (dataDescEntry.IsGlobal || currentDomain.Owner.HasFlag(Symbol.Flags.Global))
                         {//No Global inside GLOBAL-STORAGE.
