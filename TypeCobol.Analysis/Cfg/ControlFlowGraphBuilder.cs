@@ -138,10 +138,7 @@ namespace TypeCobol.Analysis.Cfg
         /// <summary>
         /// CFG Modes.
         /// Normal: is the normal mode, Paragraph blocs target by a PERFORM are not expanded.
-        /// Explicit: In this mode Iterative PERFORM Procedure group and "grafted" in the continuation flow,
-        ///            non iterative PERFORM PROCEDURE are not grafted in the continuation flow.
-        /// Extended: Paragraph blocs target by a All PERFORM rpcedure are expanded/grafted, WE SHALL IMAGINE THAT:
-        ///             EXTENED = NORMAL + EXPLICIT.
+        /// Extended: Paragraph blocs target by a PERFORM are expanded.
         /// </summary>
         public enum CfgMode
         {
@@ -450,7 +447,11 @@ namespace TypeCobol.Analysis.Cfg
         {
             CurrentNode = node;
             if (IsStatement(node))
+            {
+                if (!this.CurrentProgramCfgBuilder.Cfg.IsInProcedure)
+                    return;//Not In Procedure DIVISION
                 this.CurrentProgramCfgBuilder.CheckStartSentence(node);
+            }
             if (node.CodeElement != null)
             {
                 switch (node.CodeElement.Type)
@@ -600,6 +601,11 @@ namespace TypeCobol.Analysis.Cfg
         /// <param name="node"></param>
         public override void Exit(Node node)
         {
+            if (IsStatement(node))
+            {
+                if (!this.CurrentProgramCfgBuilder.Cfg.IsInProcedure)
+                    return;//Not In Procedure DIVISION             
+            }
             if (node.CodeElement != null)
             {
                 switch (node.CodeElement.Type)
@@ -1386,7 +1392,7 @@ namespace TypeCobol.Analysis.Cfg
 
             if (symbols.Count == 0)
             {
-                Diagnostic d = new Diagnostic(MessageCode.SemanticTCErrorInParser,
+                Diagnostic d = new Diagnostic(MessageCode.ControlFlowGraphDiagnostic,
                     node.CodeElement.Column,
                     node.CodeElement.Column,
                     node.CodeElement.Line,
@@ -1396,7 +1402,7 @@ namespace TypeCobol.Analysis.Cfg
             }
             if (symbols.Count > 1)
             {
-                Diagnostic d = new Diagnostic(MessageCode.SemanticTCErrorInParser,
+                Diagnostic d = new Diagnostic(MessageCode.ControlFlowGraphDiagnostic,
                     node.CodeElement.Column,
                     node.CodeElement.Column,
                     node.CodeElement.Line,
@@ -1439,14 +1445,13 @@ namespace TypeCobol.Analysis.Cfg
                                 group.AddBlock(recurBlock);
 
                                 //Report Recursivity
-                                block.FullInstruction = true;
-                                string strBlock = block.ToString();
-                                Diagnostic d = new Diagnostic(MessageCode.SemanticTCErrorInParser,
-                                    p.CodeElement.Column,
-                                    p.CodeElement.Column,
-                                    p.CodeElement.Line,
-                                    string.Format(Resource.RecursiveBlockOnPerformProcedure, procedureSymbol.ToString(), strBlock));
-                                block.FullInstruction = false;
+                                var firstGroup = group.Group.FirstOrDefault(b =>
+                                    b.Instructions.Count > 0 && b.Instructions.Any(i => i.CodeElement != null));         
+                                Diagnostic d = new Diagnostic(MessageCode.ControlFlowGraphDiagnostic,
+                                    firstGroup.Instructions.First.Value.CodeElement.Column,
+                                    firstGroup.Instructions.First.Value.CodeElement.Column,
+                                    firstGroup.Instructions.First.Value.CodeElement.Line,
+                                    string.Format(Resource.RecursiveBasicBlockGroupInstructions, group.ToString()));
                                 Diagnostics.Add(d);
                                 continue;
                             }
@@ -1467,7 +1472,7 @@ namespace TypeCobol.Analysis.Cfg
                     {//Recursive blocks detection.
                         block.FullInstruction = true;
                         string strBlock = block.ToString();
-                        Diagnostic d = new Diagnostic(MessageCode.SemanticTCErrorInParser,
+                        Diagnostic d = new Diagnostic(MessageCode.ControlFlowGraphDiagnostic,
                             p.CodeElement.Column,
                             p.CodeElement.Column,
                             p.CodeElement.Line,
@@ -1503,7 +1508,7 @@ namespace TypeCobol.Analysis.Cfg
                 {
                     if (procedureSymbol.Number > throughProcedureSymbol.Number)
                     {// the second procedure name is before the first one.
-                        Diagnostic d = new Diagnostic(MessageCode.SemanticTCErrorInParser,
+                        Diagnostic d = new Diagnostic(MessageCode.ControlFlowGraphDiagnostic,
                             p.CodeElement.Column,
                             p.CodeElement.Column,
                             p.CodeElement.Line,
@@ -1584,7 +1589,7 @@ namespace TypeCobol.Analysis.Cfg
                         var clonedBlock = this.CurrentProgramCfgBuilder.Cfg.AllBlocks[cloneBlockIndex];
                         newEdge = this.CurrentProgramCfgBuilder.Cfg.SuccessorEdges.Count;
                         this.CurrentProgramCfgBuilder.Cfg.SuccessorEdges.Add(clonedBlock);
-                        clonedEdgeIndexMap[edge] = newEdge;                            
+                        clonedEdgeIndexMap[edge] = newEdge;
                     }
                     b.SuccessorEdges.Add(newEdge);
                 }
@@ -1644,13 +1649,13 @@ namespace TypeCobol.Analysis.Cfg
             {
                 int removedIndex = -1;
                 BasicBlockForNodeGroup iterativeGroup = null;
-                for (int i = 0; i <  block.SuccessorEdges.Count && removedIndex < 0; i++)
+                for (int i = 0; i < block.SuccessorEdges.Count && removedIndex < 0; i++)
                 {
                     int edge = block.SuccessorEdges[i];
                     var edgeBlock = cfg.SuccessorEdges[edge];
                     if (edgeBlock is BasicBlockForNodeGroup g)
                     {
-                        if (g.IsIterativeGroup && edge != g.EntryIndexInSuccessors  && g.Group.Count > 0)
+                        if (g.IsIterativeGroup && edge != g.EntryIndexInSuccessors && g.Group.Count > 0)
                         {
                             if (g.IsAfterIterativeGroup)
                             {
@@ -1658,7 +1663,7 @@ namespace TypeCobol.Analysis.Cfg
                                 removedIndex = i;
                             }
                             break;
-                        }                        
+                        }
                     }
                 }
                 if (removedIndex >= 0 && iterativeGroup != null)
@@ -1673,7 +1678,7 @@ namespace TypeCobol.Analysis.Cfg
                 if (block is BasicBlockForNodeGroup bg)
                 {//For a Group we must DFS inside
                     if (bg.Group.Count > 0)
-                    {                        
+                    {
                         if (VisitedGroup == null)
                         {
                             VisitedGroup = new HashSet<BasicBlockForNodeGroup>();
@@ -1723,7 +1728,7 @@ namespace TypeCobol.Analysis.Cfg
                     BasicBlockForNodeGroup group = item.Item2;
                     topologicalGroupOrder[group.GroupIndex] = group;
                 }
-                foreach(var group in newGroups)
+                foreach (var group in newGroups)
                 {
                     topologicalGroupOrder[group.GroupIndex] = group;
                 }
@@ -1741,7 +1746,7 @@ namespace TypeCobol.Analysis.Cfg
         /// <param name="group">The group to compute the terminal blocks</param>
         private void ComputeBasicBlockGroupTerminalBlocks(BasicBlockForNodeGroup group)
         {
-            if (group.Group.Count > 0 && group.TerminalBlocks == null)
+            if (group.Group.Count > 0)
             {
                 LinkedListNode<BasicBlock<Node, D>> first = group.Group.First;
                 MultiBranchContext ctx = new MultiBranchContext(this.CurrentProgramCfgBuilder, null);
@@ -1912,7 +1917,7 @@ namespace TypeCobol.Analysis.Cfg
                 IEnumerable<CfgSentence> sentences = ResolveSectionOrParagraphSentences(@goto, sref, out targetSymbol);
                 if (targetSymbol == null)
                 {
-                    Diagnostic d = new Diagnostic(MessageCode.SemanticTCErrorInParser,
+                    Diagnostic d = new Diagnostic(MessageCode.ControlFlowGraphDiagnostic,
                         @goto.CodeElement.Column,
                         @goto.CodeElement.Column,
                         @goto.CodeElement.Line,
@@ -3072,7 +3077,7 @@ namespace TypeCobol.Analysis.Cfg
                             }
                             if (!bResolved)
                             {
-                                Diagnostic d = new Diagnostic(MessageCode.SemanticTCErrorInParser,
+                                Diagnostic d = new Diagnostic(MessageCode.ControlFlowGraphDiagnostic,
                                     alter.CodeElement.Column,
                                     alter.CodeElement.Column,
                                     alter.CodeElement.Line,
@@ -3330,7 +3335,7 @@ namespace TypeCobol.Analysis.Cfg
         /// <returns>The new Block</returns>
         internal BasicBlockForNodeGroup CreateGroupBlock(Node node, bool addToCurrentSentence)
         {
-            var block = new BasicBlockForNodeGroup();            
+            var block = new BasicBlockForNodeGroup();
             block.GroupIndex = ++GroupCounter;
             block.Index = this.CurrentProgramCfgBuilder.Cfg.AllBlocks.Count;
             this.CurrentProgramCfgBuilder.Cfg.AllBlocks.Add(block);
@@ -3410,6 +3415,20 @@ namespace TypeCobol.Analysis.Cfg
         protected virtual void EndCfg(ProcedureDivision procDiv)
         {
 
+        }
+
+        /// <summary>
+        /// Perform a Traverse recursively of all ControlFlowGraphBuilder instances
+        /// </summary>
+        /// <param name="callback">A callback function</param>
+        /// <returns>true if all Builders have been traversed, false otherwise</returns>
+        public bool TraverseAllCfgBuilders(Func<ControlFlowGraphBuilder<D>, bool> callback)
+        {
+            if (AllCfgBuilder != null)
+            {
+                return AllCfgBuilder.All(b => callback(b) && (b != this ? b.TraverseAllCfgBuilders(callback): true));
+            }
+            return true;
         }
     }
 }

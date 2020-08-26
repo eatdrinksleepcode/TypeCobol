@@ -1,10 +1,10 @@
-﻿using Analytics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Analytics;
 using TypeCobol.CLI.CustomExceptions;
 using TypeCobol.Codegen;
 using TypeCobol.Codegen.Skeletons;
@@ -13,6 +13,8 @@ using TypeCobol.Compiler.CodeModel;
 using TypeCobol.Compiler.Diagnostics;
 using TypeCobol.Compiler.Directives;
 using TypeCobol.Compiler.Report;
+using TypeCobol.Compiler.Domain;
+using TypeCobol.Analysis;
 using TypeCobol.Compiler.Scopes;
 using TypeCobol.Compiler.Text;
 using TypeCobol.CustomExceptions;
@@ -88,6 +90,7 @@ namespace TypeCobol.Server
         private readonly HashSet<string> _usedCopies;
         private readonly HashSet<string> _missingCopies;
         private readonly Dictionary<string, List<GenerationException>> _generationExceptions;
+        private CfgDfaContext _cfgDfaContext = null;
 
         private CLI(TypeCobolConfiguration configuration, AbstractErrorWriter errorWriter)
         {
@@ -107,6 +110,13 @@ namespace TypeCobol.Server
             //Load intrinsics and dependencies, it will build the root symbol table
             var rootSymbolTables = LoadIntrinsicsAndDependencies();
 
+            //In DFA mode allocate the Cfg/Dfa Context
+            if (_configuration.UseDfa)
+            {
+                _cfgDfaContext = new CfgDfaContext(CfgDfaContext.Mode.Dfa);
+                _cfgDfaContext.Initialize();
+            }
+
             //Add report listeners
             var reports = InitializeReports();
 
@@ -117,6 +127,8 @@ namespace TypeCobol.Server
                 typeCobolOptions.ExecToStep = ExecutionStep.SemanticCheck;
             }
 
+            SymbolTable baseTable = null;
+            
             //First phase : parse all inputs but do not make CrossCheck yet
             foreach (var inputFilePath in _configuration.InputFiles)
             {
@@ -243,14 +255,22 @@ namespace TypeCobol.Server
 
                 if (!string.IsNullOrEmpty(_configuration.ReportZCallFilePath))
                 {
-                    Compiler.Parser.NodeDispatcher.RegisterStaticNodeListenerFactory(
-                        () =>
-                        {
-                            var report = new ZCallPgmReport(_configuration.ReportZCallFilePath);
-                            reports.Add(report);
-                            return report;
-                        });
-
+                    if (!_configuration.UseDfa)
+                    {
+                        Compiler.Parser.NodeDispatcher.RegisterStaticNodeListenerFactory(
+                            () =>
+                            {
+                                var report = new ZCallPgmReport(_configuration.ReportZCallFilePath);
+                                reports.Add(report);
+                                return report;
+                            });
+                    }
+                    else
+                    {//ZCallPgmReport using DFA
+                        TypeCobol.Analysis.Report.ZCallPgmReport report =
+                            new TypeCobol.Analysis.Report.ZCallPgmReport(_cfgDfaContext, _configuration.ReportZCallFilePath);
+                        reports.Add(report);
+                    }
                 }
             }
 

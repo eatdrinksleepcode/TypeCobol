@@ -20,16 +20,17 @@ namespace TypeCobol.Analysis.Graph
         /// Constructor
         /// </summary>
         /// <param name="cfg"></param>
-        public CfgDotFileForNodeGenerator()
-        {
-
+        /// <param name="bInverse">True if an inverse graph must be generated, that is to say using predecessor edges</param>
+        public CfgDotFileForNodeGenerator(bool bInverse = false) : base(bInverse)
+        {            
         }
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="cfg">The underlying Control Flow Graph</param>
-        public CfgDotFileForNodeGenerator(ControlFlowGraph<Node, D> cfg) : base (cfg)
+        /// <param name="bInverse">True if an inverse graph must be generated, that is to say using predecessor edges</param>
+        public CfgDotFileForNodeGenerator(ControlFlowGraph<Node, D> cfg, bool bInverse = false) : base (cfg, bInverse)
         {
         }
 
@@ -84,7 +85,7 @@ namespace TypeCobol.Analysis.Graph
         }
 
         /// <summary>
-        /// Emit a basic block, with also handling recursive BasicBlock Groups that can appear for
+        /// Emit a basic block, with also handling recusive BasicBlock Groups that can appear for
         /// instance for recursive PERFORM.
         /// </summary>
         /// <param name="block">The BasicBlock to emit</param>
@@ -127,28 +128,35 @@ namespace TypeCobol.Analysis.Graph
                     if (group.Group.Count > 0)
                     {
                         sw.WriteLine(string.Format("label = \"{0}\";", ((ControlFlowGraphBuilder<D>.BasicBlockForNode)group.Group.First.Value).Tag));
-                        CfgDotFileForNodeGenerator<D> cfgDot = new CfgDotFileForNodeGenerator<D>(cfg);
-                        cfgDot.EmittedGroupIndices = EmittedGroupIndices;
-                        cfgDot.FullInstruction = this.FullInstruction;
-                        cfgDot.Writer = sw;
-                        cfgDot.DigraphBuilder = new StringBuilder();
+                        CfgDotFileForNodeGenerator<D> cfgDot = new CfgDotFileForNodeGenerator<D>(cfg, this.Inverse)
+                        {
+                            EmittedGroupIndices = EmittedGroupIndices,
+                            FullInstruction = this.FullInstruction,
+                            Writer = sw,
+                            DigraphBuilder = new StringBuilder()
+                        };
                         //Emit block starting at the first block.
                         LinkedListNode<BasicBlock<Node, D>> first = group.Group.First;
-                        cfg.DFS(first.Value, (b, e, p, g) => cfgDot.EmitBasicBlock(b, e, p, g));
+                        if (Inverse)
+                            cfg.DFSInverse(first.Value, (b, e, a, g) => cfgDot.EmitBasicBlock(b, e, a, g));
+                        else
+                            cfg.DFS(first.Value, (b, e, a, g) => cfgDot.EmitBasicBlock(b, e, a, g));
                         sw.WriteLine(cfgDot.DigraphBuilder.ToString());
                     }
                     sw.WriteLine('}');
                 }
                 //Create dashed link to the group
                 if (group.Group.Count > 0)
-                {   //For an  iterative group an plein arrow is drawn to indicate the target group
-                    sw.WriteLine(string.Format("Block{0} -> Block{1} {2}", block.Index, group.Group.First.Value.Index, group.IsExplicitIterativeGroup ? "" : "[style=dashed]"));
+                {
+                    if (Inverse)
+                        sw.WriteLine(string.Format("Block{1} -> Block{0} {2}", block.Index, group.Group.First.Value.Index, group.IsExplicitIterativeGroup ? "" : "[style=dashed]"));
+                    else
+                        sw.WriteLine(string.Format("Block{0} -> Block{1} {2}", block.Index, group.Group.First.Value.Index, group.IsExplicitIterativeGroup ? "" : "[style=dashed]"));
                 }
                 else
                 {
                     sw.WriteLine(string.Format("Block{0} -> \"\" {1}", block.Index, group.IsExplicitIterativeGroup ? "" : "[style=dashed]"));
                 }
-
                 sw.Flush();
                 this.Writer.WriteLine(sw.ToString());
             }

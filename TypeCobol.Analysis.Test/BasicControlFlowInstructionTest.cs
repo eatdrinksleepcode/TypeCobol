@@ -17,37 +17,24 @@ namespace TypeCobol.Analysis.Test
     [TestClass]
     public class BasicControlFlowInstructionTest
     {
-        public NodeListenerFactory CfgBuilderNodeListenerFactory = null;
-
-        public static DefaultControlFlowGraphBuilder CfgBuilder;
-        public static ControlFlowGraphBuilder<object>.CfgMode staticMode = ControlFlowGraphBuilder<object>.CfgMode.Normal;
+        public static CfgDfaTestContext ctx = null;
 
         [TestInitialize]
         public void TestInitialize()
         {
-            //Allocate a static Default Control Flow Graph Builder
-            CfgBuilderNodeListenerFactory = () =>
-            {
-                CfgBuilder = new DefaultControlFlowGraphBuilder();
-                CfgBuilder.Mode = staticMode;
-                return CfgBuilder;
-            };
-            NodeDispatcher.RegisterStaticNodeListenerFactory(CfgBuilderNodeListenerFactory);
+            ctx = new CfgDfaTestContext(CfgDfaTestContext.Mode.Cfg);
+            ctx.TestInitialize();
         }
 
         [TestCleanup]
         public void TestCleanup()
         {
-            if (CfgBuilderNodeListenerFactory != null)
-            {
-                NodeDispatcher.RemoveStaticNodeListenerFactory(CfgBuilderNodeListenerFactory);
-            }
+            ctx.TestCleanup();
         }
-
 
         /// <summary>
         /// This is a simple test to ensure that given a Cobol program,
-        /// all staked and nested program are captured.
+        /// all staked and nested program are capured.
         /// </summary>
         [TestMethod]
         public void MixedStackedNestedPgmsTest()
@@ -59,23 +46,23 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 3);
             //var currentProgram = Builder.Programs[0];
             //var mainProgram = document.Results.ProgramClassDocumentSnapshot.Root.MainProgram;
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
             //In this case we have first the Main program cfg, followed by the nested programs cfg builders of the main program, followed by stacked program cfg builders.
             //Stack programs cfg builders have no parent cfg builders.
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 6);
-            Assert.IsNull(CfgBuilder.ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[0] == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 6);
+            Assert.IsNull(ctx.CfgBuilder.ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[0] == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
         }
 
         /// <summary>
         /// This is a simple test to ensure that given a Cobol program,
-        /// all staked and nested program are captured.
+        /// all staked and nested program are capured.
         /// </summary>
         [TestMethod]
         public void MixedStackedNestedProcsPgmsTest()
@@ -87,80 +74,80 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 3);
             //var currentProgram = Builder.Programs[0];
             //var mainProgram = document.Results.ProgramClassDocumentSnapshot.Root.MainProgram;
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
             //In this case we have first the Main program cfg, followed by the nested functions and programs cfg builders of the main program, followed by stacked program cfg builders.
             //Stack programs cfg builders have no parent cfg builders.
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 8);
-            Assert.IsNull(CfgBuilder.ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[0] == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 8);
+            Assert.IsNull(ctx.CfgBuilder.ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[0] == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
 
             //Proc0
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[1].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].Cfg.ProgramNode.Name.Equals("Proc0"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[1].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].Cfg.ProgramNode.Name.Equals("Proc0"));
 
             //Proc1
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[2].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].Cfg.ProgramNode.Name.Equals("Proc1"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[2].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].Cfg.ProgramNode.Name.Equals("Proc1"));
 
             //Nested0
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[3].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].Cfg.ProgramNode is Program);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].Cfg.ProgramNode.Name.Equals("Nested0"));
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[3].AllCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc0"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[3].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].Cfg.ProgramNode is Program);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].Cfg.ProgramNode.Name.Equals("Nested0"));
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[3].AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc0"));
 
             //Nested1
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[4].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].Cfg.ProgramNode is Program);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].Cfg.ProgramNode.Name.Equals("Nested1"));
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[4].AllCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc1"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[4].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].Cfg.ProgramNode is Program);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].Cfg.ProgramNode.Name.Equals("Nested1"));
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[4].AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc1"));
 
             //Nested2
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[5].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].Cfg.ProgramNode is Program);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].Cfg.ProgramNode.Name.Equals("Nested2"));
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[5].AllCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc2"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[5].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].Cfg.ProgramNode is Program);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].Cfg.ProgramNode.Name.Equals("Nested2"));
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[5].AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc2"));
 
             //Stacked0
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[6].ParentProgramCfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[6].AllCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[6].Cfg.ProgramNode is Program);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[6].Cfg.ProgramNode.Name.Equals("Stacke0"));
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[6].AllCfgBuilder.Count == 1);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[6].ParentProgramCfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[6].AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[6].Cfg.ProgramNode is Program);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[6].Cfg.ProgramNode.Name.Equals("Stacke0"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[6].AllCfgBuilder.Count == 1);
             //StackedNestedProc0
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[6].AllCfgBuilder[0].Cfg);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[6].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[6].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("StackedNestedProc0"));
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[6].AllCfgBuilder[0].Cfg);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[6].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[6].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("StackedNestedProc0"));
 
             //Stacked1
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[7].ParentProgramCfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[7].AllCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[7].Cfg.ProgramNode is Program);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[7].Cfg.ProgramNode.Name.Equals("Stacke1"));
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[7].AllCfgBuilder.Count == 1);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[7].ParentProgramCfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[7].AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[7].Cfg.ProgramNode is Program);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[7].Cfg.ProgramNode.Name.Equals("Stacke1"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[7].AllCfgBuilder.Count == 1);
             //StackedNestedProc1
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[7].AllCfgBuilder[0].Cfg);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[7].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[7].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("StackedNestedProc1"));
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[7].AllCfgBuilder[0].Cfg);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[7].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[7].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("StackedNestedProc1"));
         }
 
         [TestMethod]
@@ -172,10 +159,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThen0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
         [TestMethod]
         public void IfThenAfterTest()
@@ -186,10 +173,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenAfter0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -201,10 +188,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenElse0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -216,10 +203,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenNextSentence0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -231,10 +218,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenElseNextSentence1.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -246,10 +233,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenElseNextSentence2.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -261,10 +248,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenElseNextSentence0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -276,10 +263,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenNested0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -291,10 +278,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenNested1.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -306,10 +293,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenNested2.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -321,10 +308,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenElseNested0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -336,10 +323,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenElseNested1.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
         
         [TestMethod]
@@ -351,10 +338,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenElseCascade0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
 
@@ -367,10 +354,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "SimpleGotoPara0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -382,10 +369,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "ComplexGotoPara0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -397,10 +384,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "Evaluate0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -412,10 +399,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "EvaluateNoOther0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -427,10 +414,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "EvaluateMultiWhen0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -442,10 +429,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "Alter0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -457,10 +444,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "Alter1.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         /// <summary>
@@ -475,10 +462,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "Alter2.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -490,10 +477,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "GoBack0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -505,10 +492,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "GoBack1.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -520,10 +507,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "Perform0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -535,10 +522,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformUntil0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -550,10 +537,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformUntil1.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
         
         [TestMethod]
@@ -565,10 +552,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformTime0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -580,10 +567,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformVarying0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -595,10 +582,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcedure0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -610,10 +597,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcedure1.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -625,58 +612,42 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcedure2.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
         public void PerformProcedureExplicit0()
         {
             string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcedure0.cbl");
-            ControlFlowGraphBuilder<object>.CfgMode saveMode = staticMode;
-            staticMode = ControlFlowGraphBuilder<object>.CfgMode.Explicit;
-            try
-            {
-                var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
-                    false, /*copies*/ null);
-                Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
-                string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcedureExplicit0.dot");
+            ctx._Mode = CfgDfaContext.Mode.CfgExplicit;
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcedureExplicit0.dot");
 
-                Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-                Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-                CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
-            }
-            finally
-            {
-                staticMode = saveMode;
-            }
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
         public void PerformProcedureExplicit2()
         {
             string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcedure2.cbl");
-            ControlFlowGraphBuilder<object>.CfgMode saveMode = staticMode;
-            staticMode = ControlFlowGraphBuilder<object>.CfgMode.Explicit;
-            try
-            {
-                var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
-                    false, /*copies*/ null);
-                Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
-                string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcedureExplicit2.dot");
+            ctx._Mode = CfgDfaContext.Mode.CfgExplicit;
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcedureExplicit2.dot");
 
-                Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-                Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-                CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
-            }
-            finally
-            {
-                staticMode = saveMode;
-            }
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -688,10 +659,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformNested0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -703,10 +674,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "Search0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -718,10 +689,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "SearchNextSentence0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -733,10 +704,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "SearchCond0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -748,10 +719,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "Declaratives0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -763,10 +734,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "Declaratives1.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -778,10 +749,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformThru0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -793,10 +764,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformThru1.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -808,10 +779,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "MixPeformEvaluateIf0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -823,10 +794,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcRecursive0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -838,34 +809,26 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeRecursive0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
         public void PerformProcIterativeRecursiveExplicit0()
         {
-            ControlFlowGraphBuilder<object>.CfgMode saveStaticMode = staticMode;
-            staticMode = ControlFlowGraphBuilder<object>.CfgMode.Explicit;
-            try
-            {
-                string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcIterativeRecursive0.cbl");
-                var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
-                    false, /*copies*/ null);
-                Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
-                string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeRecursiveExplicit0.dot");
+            ctx._Mode = CfgDfaContext.Mode.CfgExplicit;
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcIterativeRecursive0.cbl");
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeRecursiveExplicit0.dot");
 
-                Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-                Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-                CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
-            }
-            finally
-            {
-                staticMode = saveStaticMode;
-            }
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -877,10 +840,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeAfterRecursive0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -892,10 +855,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeAfterRecursive1.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -907,82 +870,58 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeAfterRecursive2.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
         public void PerformProcIterativeAfterRecursiveExtended0()
         {
-            ControlFlowGraphBuilder<object>.CfgMode saveStaticMode = staticMode;
-            staticMode = ControlFlowGraphBuilder<object>.CfgMode.Extended;
-            try
-            {
-                string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcIterativeAfterRecursive0.cbl");
-                var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
-                    false, /*copies*/ null);
-                Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
-                string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeAfterRecursiveExtended0.dot");
+            ctx._Mode = CfgDfaContext.Mode.CfgExpand;
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcIterativeAfterRecursive0.cbl");
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeAfterRecursiveExtended0.dot");
 
-                Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-                Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-                CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
-            }
-            finally
-            {
-                staticMode = saveStaticMode;
-            }
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
         public void PerformProcIterativeAfterRecursiveExtended1()
         {
-            ControlFlowGraphBuilder<object>.CfgMode saveStaticMode = staticMode;
-            staticMode = ControlFlowGraphBuilder<object>.CfgMode.Extended;
-            try
-            {
-                string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcIterativeAfterRecursive1.cbl");
-                var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
-                    false, /*copies*/ null);
-                Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
-                string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeAfterRecursiveExtended1.dot");
+            ctx._Mode = CfgDfaContext.Mode.CfgExpand;
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcIterativeAfterRecursive1.cbl");
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeAfterRecursiveExtended1.dot");
 
-                Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-                Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-                CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
-            }
-            finally
-            {
-                staticMode = saveStaticMode;
-            }
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
         public void PerformProcIterativeAfterRecursiveExtended2()
         {
-            ControlFlowGraphBuilder<object>.CfgMode saveStaticMode = staticMode;
-            staticMode = ControlFlowGraphBuilder<object>.CfgMode.Extended;
-            try
-            {
-                string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcIterativeAfterRecursive2.cbl");
-                var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
-                    false, /*copies*/ null);
-                Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
-                string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeAfterRecursiveExtended2.dot");
+            ctx._Mode = CfgDfaContext.Mode.CfgExpand;
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcIterativeAfterRecursive2.cbl");
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcIterativeAfterRecursiveExtended2.dot");
 
-                Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-                Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-                CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
-            }
-            finally
-            {
-                staticMode = saveStaticMode;
-            }
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -994,10 +933,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcProcRecursive0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -1009,10 +948,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcProcProcRecursive0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -1024,58 +963,42 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProc4Recursive0.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
         public void PerformProcProcProcRecursiveExtended0()
         {
-            ControlFlowGraphBuilder<object>.CfgMode saveStaticMode = staticMode;
-            staticMode = ControlFlowGraphBuilder<object>.CfgMode.Extended;
-            try
-            {
-                string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcProcProcRecursive0.cbl");
-                var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
-                    false, /*copies*/ null);
-                Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
-                string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcProcProcRecursiveExtended0.dot");
+            ctx._Mode = CfgDfaContext.Mode.CfgExpand;
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcProcProcRecursive0.cbl");
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcProcProcRecursiveExtended0.dot");
 
-                Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-                Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-                CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
-            }
-            finally
-            {
-                staticMode = saveStaticMode;
-            }
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
         public void PerformProc4RecursiveExtended0()
         {
-            ControlFlowGraphBuilder<object>.CfgMode saveStaticMode = staticMode;
-            staticMode = ControlFlowGraphBuilder<object>.CfgMode.Extended;
-            try
-            {
-                string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProc4Recursive0.cbl");
-                var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
-                    false, /*copies*/ null);
-                Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
-                string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProc4RecursiveExtended0.dot");
+            ctx._Mode = CfgDfaContext.Mode.CfgExpand;
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProc4Recursive0.cbl");
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProc4RecursiveExtended0.dot");
 
-                Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-                Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-                CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
-            }
-            finally
-            {
-                staticMode = saveStaticMode;
-            }
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -1089,22 +1012,22 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 3);
             //var currentProgram = Builder.Programs[0];
             //var mainProgram = document.Results.ProgramClassDocumentSnapshot.Root.MainProgram;
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
             //In this case we have first the Main program cfg, followed by the nested programs cfg builders of the main program, followed by stacked program cfg builders.
             //Stack programs cfg builders have no parent cfg builders.
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 6);
-            Assert.IsNull(CfgBuilder.ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[0] == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 6);
+            Assert.IsNull(ctx.CfgBuilder.ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[0] == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
 
             //We have taken the same CFG than for IfThenElseCascade0    
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenElseCascade0.dot");
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.AllCfgBuilder[2].Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.AllCfgBuilder[2].Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -1118,22 +1041,22 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 3);
             //var currentProgram = Builder.Programs[0];
             //var mainProgram = document.Results.ProgramClassDocumentSnapshot.Root.MainProgram;
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
             //In this case we have first the Main program cfg, followed by the nested programs cfg builders of the main program, followed by stacked program cfg builders.
             //Stack programs cfg builders have no parent cfg builders.
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 6);
-            Assert.IsNull(CfgBuilder.ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[0] == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 6);
+            Assert.IsNull(ctx.CfgBuilder.ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[0] == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
 
             //We have taken the same CFG than for PerformProcedure0  
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcedure0.dot");
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.AllCfgBuilder[3].Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.AllCfgBuilder[3].Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -1147,22 +1070,22 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 3);
             //var currentProgram = Builder.Programs[0];
             //var mainProgram = document.Results.ProgramClassDocumentSnapshot.Root.MainProgram;
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
             //In this case we have first the Main program cfg, followed by the nested programs cfg builders of the main program, followed by stacked program cfg builders.
             //Stack programs cfg builders have no parent cfg builders.
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 6);
-            Assert.IsNull(CfgBuilder.ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[0] == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 6);
+            Assert.IsNull(ctx.CfgBuilder.ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[0] == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
 
             //We have taken the same CFG than for MixPeformEvaluateIf0  
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "MixPeformEvaluateIf0.dot");
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.AllCfgBuilder[1].Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.AllCfgBuilder[1].Cfg, path, expectedPath);
         }
 
 
@@ -1177,22 +1100,22 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 3);
             //var currentProgram = Builder.Programs[0];
             //var mainProgram = document.Results.ProgramClassDocumentSnapshot.Root.MainProgram;
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
             //In this case we have first the Main program cfg, followed by the nested programs cfg builders of the main program, followed by stacked program cfg builders.
             //Stack programs cfg builders have no parent cfg builders.
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 6);
-            Assert.IsNull(CfgBuilder.ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[0] == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 6);
+            Assert.IsNull(ctx.CfgBuilder.ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[0] == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
 
             //We have taken the same CFG than for PerformProcedure0  
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformProcedure0.dot");
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.AllCfgBuilder[4].Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.AllCfgBuilder[4].Cfg, path, expectedPath);
         }
 
 
@@ -1207,22 +1130,22 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 3);
             //var currentProgram = Builder.Programs[0];
             //var mainProgram = document.Results.ProgramClassDocumentSnapshot.Root.MainProgram;
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
             //In this case we have first the Main program cfg, followed by the nested programs cfg builders of the main program, followed by stacked program cfg builders.
             //Stack programs cfg builders have no parent cfg builders.
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 6);
-            Assert.IsNull(CfgBuilder.ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[0] == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 6);
+            Assert.IsNull(ctx.CfgBuilder.ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[0] == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder);
 
             //We have taken the same CFG than for MixPeformEvaluateIf0  
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "MixPeformEvaluateIf0.dot");
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.AllCfgBuilder[5].Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.AllCfgBuilder[5].Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -1236,23 +1159,23 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 3);
             //var currentProgram = Builder.Programs[0];
             //var mainProgram = document.Results.ProgramClassDocumentSnapshot.Root.MainProgram;
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
             //In this case we have first the Main program cfg, followed by the nested functions and programs cfg builders of the main program, followed by stacked program cfg builders.
             //Stack programs cfg builders have no parent cfg builders.
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 8);
-            Assert.IsNull(CfgBuilder.ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[0] == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 8);
+            Assert.IsNull(ctx.CfgBuilder.ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[0] == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
 
             //Proc0
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[1].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[1].Cfg.ProgramNode.Name.Equals("Proc0"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[1].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[1].Cfg.ProgramNode.Name.Equals("Proc0"));
 
             //We have taken the same CFG than for IfThenElseCascade0  
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenElseCascade0.dot");
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.AllCfgBuilder[1].Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.AllCfgBuilder[1].Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -1266,23 +1189,23 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 3);
             //var currentProgram = Builder.Programs[0];
             //var mainProgram = document.Results.ProgramClassDocumentSnapshot.Root.MainProgram;
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
             //In this case we have first the Main program cfg, followed by the nested functions and programs cfg builders of the main program, followed by stacked program cfg builders.
             //Stack programs cfg builders have no parent cfg builders.
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 8);
-            Assert.IsNull(CfgBuilder.ParentProgramCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[0] == CfgBuilder);
-            Assert.IsNull(CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 8);
+            Assert.IsNull(ctx.CfgBuilder.ParentProgramCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[0] == ctx.CfgBuilder);
+            Assert.IsNull(ctx.CfgBuilder.AllCfgBuilder[0].ParentProgramCfgBuilder);
 
             //Proc1
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[2].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[2].Cfg.ProgramNode.Name.Equals("Proc1"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[2].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[2].Cfg.ProgramNode.Name.Equals("Proc1"));
 
             //We have taken the same CFG than for ComplexGotoPara0  
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "ComplexGotoPara0.dot");
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.AllCfgBuilder[2].Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.AllCfgBuilder[2].Cfg, path, expectedPath);
         }
 
 
@@ -1294,49 +1217,49 @@ namespace TypeCobol.Analysis.Test
                 false, /*copies*/ null);
 
             //Nested0
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[3].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].Cfg.ProgramNode is Program);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].Cfg.ProgramNode.Name.Equals("Nested0"));
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[3].AllCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc0"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[3].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].Cfg.ProgramNode is Program);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].Cfg.ProgramNode.Name.Equals("Nested0"));
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[3].AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc0"));
 
             //Nested1
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[4].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].Cfg.ProgramNode is Program);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].Cfg.ProgramNode.Name.Equals("Nested1"));
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[4].AllCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc1"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[4].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].Cfg.ProgramNode is Program);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].Cfg.ProgramNode.Name.Equals("Nested1"));
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[4].AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc1"));
 
             //Nested2
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder == CfgBuilder);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[5].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].Cfg.ProgramNode is Program);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].Cfg.ProgramNode.Name.Equals("Nested2"));
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[5].AllCfgBuilder);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc2"));
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].ParentProgramCfgBuilder == ctx.CfgBuilder);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[5].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].Cfg.ProgramNode is Program);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].Cfg.ProgramNode.Name.Equals("Nested2"));
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[5].AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg.ProgramNode is FunctionDeclaration);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg.ProgramNode.Name.Equals("NestedProc2"));
 
             //We have taken the same CFG than for ComplexGotoPara0  
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "ComplexGotoPara0.dot");
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.AllCfgBuilder[3].AllCfgBuilder[0].Cfg, path, expectedPath);
 
             //We have taken the same CFG than for IfThenElseCascade0  
             expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IfThenElseCascade0.dot");
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.AllCfgBuilder[4].AllCfgBuilder[0].Cfg, path, expectedPath);
 
             //We have taken the same CFG than for PerformThru1  
             expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformThru1.dot");
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.AllCfgBuilder[5].AllCfgBuilder[0].Cfg, path, expectedPath);
         }
 
         [TestMethod]
@@ -1348,10 +1271,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerfomMixedSectionParagraph.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
         }
 
         /// <summary>
@@ -1375,10 +1298,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "CGM110.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath, false);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath, false);
         }
 
         /// <summary>
@@ -1402,10 +1325,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "IX105A.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath, false);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath, false);
         }
 
         /// <summary>
@@ -1429,10 +1352,10 @@ namespace TypeCobol.Analysis.Test
             Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
             string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "SG102A.dot");
 
-            Assert.IsTrue(CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-            CfgTestUtils.GenDotCfgAndCompare(CfgBuilder.Cfg, path, expectedPath, false);
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath, false);
         }
 
         /// <summary>
@@ -1464,9 +1387,9 @@ namespace TypeCobol.Analysis.Test
                 var document = TypeCobol.Parser.Parse(f, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
                     false, /*copies*/ null);
 
-                Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+                Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-                CfgTestUtils.GenDotCfgFile(CfgBuilder.Cfg, expectedPath);
+                CfgTestUtils.GenDotCfgFile(ctx.CfgBuilder.Cfg, expectedPath);
 
                 TestCleanup();
                 TestInitialize();
@@ -1502,13 +1425,51 @@ namespace TypeCobol.Analysis.Test
                 var document = TypeCobol.Parser.Parse(f, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
                     false, /*copies*/ null);
 
-                Assert.IsNotNull(CfgBuilder.AllCfgBuilder);
+                Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
-                CfgTestUtils.GenDotCfgFile(CfgBuilder.Cfg, expectedPath, false);
+                CfgTestUtils.GenDotCfgFile(ctx.CfgBuilder.Cfg, expectedPath, false);
 
                 TestCleanup();
                 TestInitialize();
             }
+        }
+
+        /// <summary>
+        /// Simple test for testing inverse CFG graph generation, using the If-Then-Else cascacde.
+        /// </summary>
+        [TestMethod]
+        [TestCategory("InverseCfg")]
+        public void IfThenElseCascadeInverse0()
+        {
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "IfThenElseCascade0.cbl");
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "InverseCfg", "IfThenElseCascadeInverse.dot");
+
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
+
+            ctx.CfgBuilder.Cfg.SetupPredecessorEdges();
+
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath, true, true);
+        }
+
+        [TestMethod]
+        public void PerformProcedureInverse0()
+        {
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcedure0.cbl");
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "InverseCfg", "PerformProcedureInverse0.dot");
+
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
+
+            ctx.CfgBuilder.Cfg.SetupPredecessorEdges();
+
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath, true, true);
         }
     }
 }

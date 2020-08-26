@@ -25,6 +25,8 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BasicCfgProgramTest.cs" />
+    <Compile Include="BitSetTest.cs" />
     <None Include="BasicCfgInstrs\Alter0.cbl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -80,8 +82,32 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Include="BasicControlFlowInstructionTest.cs" />
+    <Compile Include="CfgDfaTestContext.cs" />
+    <Compile Include="DfaBuildUseAndDefListTest.cs" />
     <Compile Include="CfgTestUtils.cs" />
+    <Compile Include="DfaCallPgmReport.cs" />
+    <Compile Include="DfaGenAndKillSetTest.cs" />
+    <Compile Include="DfaInOutSetsTest.cs" />
+    <Compile Include="DfaUseDefSetTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="CfgDfaBuildTests\PrgWithNoProcDiv.cbl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DotOutput\EmptyCfg.dot">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Report\Input\InBulkCallPgm.cbl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Report\Input\InBulkCallPgm88Set.cbl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Report\Output\InBulkCallPgm.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Report\Output\InBulkCallPgm88Set.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="BasicCfgInstrs\ComplexGotoPara0.cbl">
@@ -210,6 +236,12 @@
     <None Include="BasicCfgInstrs\MixedStackedNestedProcsPgms.tcbl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="BasicCfgPrograms\HanoiPrg.cbl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="BasicDfaSamples\SampleGotos0.cbl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="DotOutput\Alter0.dot">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -218,6 +250,12 @@
     </None>
     <None Include="DotOutput\Alter2.dot">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DotOutput\CfgPrograms\DetectPerformProcRecursiveException.dot">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DotOutput\CfgPrograms\HanoiPrg.dot">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="DotOutput\CGM110.dot">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -286,6 +324,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="DotOutput\IfThenNextSentence0.dot">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DotOutput\InverseCfg\IfThenElseCascadeInverse.dot">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="DotOutput\InverseCfg\PerformProcedureInverse0.dot">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="DotOutput\MixPeformEvaluateIf0.dot">
@@ -413,6 +457,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="BasicCfgInstrs\CfgInProcedure0.cbl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CfgDfaBuildingTests.cs" />
+    <None Include="CfgDfaBuildTests\ExecSqlOutsideProc.cbl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
