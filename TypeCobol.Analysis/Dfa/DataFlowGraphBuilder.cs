@@ -386,7 +386,7 @@ namespace TypeCobol.Analysis.Dfa
                 IntializeInOutSetsComputation();
 
                 //Compute Predecessors
-                this.Cfg.SetupPredecessorEdges();
+                this.Cfg.SetupPredecessorEdgesFromStart();
 
                 BitSet newIn = new BitSet(DefList.Count);
                 bool bChange = true;
@@ -395,25 +395,31 @@ namespace TypeCobol.Analysis.Dfa
                     bChange = false;
                     foreach (var b in Cfg.AllBlocks)
                     {
-                        //// IN(b) = U OUT(p)  whepre p belongs to Predecessor(b)
-                        foreach (var p in b.PredecessorEdges)
+                        if (b.PredecessorEdges != null)
                         {
-                            var a = Cfg.PredecessorEdges[p];
-                            newIn.Or(a.Data.Out);
+                            //// IN(b) = U OUT(p)  whepre p belongs to Predecessor(b)
+                            foreach (var p in b.PredecessorEdges)
+                            {
+                                var a = Cfg.PredecessorEdges[p];
+                                newIn.Or(a.Data.Out);
+                            }
+
+                            if (!newIn.Equals(b.Data.In))
+                            {
+                                bChange = true;
+                                b.Data.In.Copy(newIn);
+                            }
+
+                            newIn.Clear();
+                            //OUT(b) = (IN(b) - KILL(b)) U GEN(b)
+                            BitSet live = b.Data.Kill != null ? b.Data.In.Difference(b.Data.Kill) : b.Data.In.Clone();
+                            if (b.Data.Gen != null)
+                            {
+                                live.Or(b.Data.Gen);
+                            }
+
+                            b.Data.Out = live;
                         }
-                        if (!newIn.Equals(b.Data.In))
-                        {
-                            bChange = true;
-                            b.Data.In.Copy(newIn);
-                        }
-                        newIn.Clear();
-                        //OUT(b) = (IN(b) - KILL(b)) U GEN(b)
-                        BitSet live = b.Data.Kill != null ? b.Data.In.Difference(b.Data.Kill) : b.Data.In.Clone();
-                        if (b.Data.Gen != null)
-                        {
-                            live.Or(b.Data.Gen);
-                        }
-                        b.Data.Out = live;
                     }
                 }
 
