@@ -34,7 +34,7 @@ namespace TypeCobol.Analysis.Test
 
         /// <summary>
         /// This is a simple test to ensure that given a Cobol program,
-        /// all staked and nested program are capured.
+        /// all staked and nested program are captured.
         /// </summary>
         [TestMethod]
         public void MixedStackedNestedPgmsTest()
@@ -62,7 +62,7 @@ namespace TypeCobol.Analysis.Test
 
         /// <summary>
         /// This is a simple test to ensure that given a Cobol program,
-        /// all staked and nested program are capured.
+        /// all staked and nested program are captured.
         /// </summary>
         [TestMethod]
         public void MixedStackedNestedProcsPgmsTest()
@@ -651,6 +651,51 @@ namespace TypeCobol.Analysis.Test
         }
 
         [TestMethod]
+        public void NotRecursePerform()
+        {
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "NotRecursePerform.cbl");
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "NotRecursePerform.dot");
+
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
+
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
+        }
+
+        [TestMethod]
+        public void PerformIdentity()
+        {
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformIdentity.cbl");
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "PerformIdentity.dot");
+
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
+
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
+        }
+
+        [TestMethod]
+        public void NotRecursePerform2()
+        {
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "NotRecursePerform2.cbl");
+            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
+                false, /*copies*/ null);
+            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
+            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "NotRecursePerform2.dot");
+
+            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
+            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
+
+            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
+        }
+
+        [TestMethod]
         public void PerformNested0()
         {
             string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformNested0.cbl");
@@ -798,6 +843,7 @@ namespace TypeCobol.Analysis.Test
             Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
 
             CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath);
+            ctx.CfgBuilder.Cfg.DebugDump();
         }
 
         [TestMethod]
@@ -1432,44 +1478,6 @@ namespace TypeCobol.Analysis.Test
                 TestCleanup();
                 TestInitialize();
             }
-        }
-
-        /// <summary>
-        /// Simple test for testing inverse CFG graph generation, using the If-Then-Else cascacde.
-        /// </summary>
-        [TestMethod]
-        [TestCategory("InverseCfg")]
-        public void IfThenElseCascadeInverse0()
-        {
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "IfThenElseCascade0.cbl");
-            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
-                false, /*copies*/ null);
-            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
-            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "InverseCfg", "IfThenElseCascadeInverse.dot");
-
-            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
-
-            ctx.CfgBuilder.Cfg.SetupPredecessorEdges();
-
-            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath, true, true);
-        }
-
-        [TestMethod]
-        public void PerformProcedureInverse0()
-        {
-            string path = Path.Combine(Directory.GetCurrentDirectory(), "BasicCfgInstrs", "PerformProcedure0.cbl");
-            var document = TypeCobol.Parser.Parse(path, /*format*/ DocumentFormat.RDZReferenceFormat, /*autoRemarks*/
-                false, /*copies*/ null);
-            Assert.IsTrue(document.Results.PrgSymbolTblBuilder.Programs.Count == 1);
-            string expectedPath = Path.Combine(Directory.GetCurrentDirectory(), "DotOutput", "InverseCfg", "PerformProcedureInverse0.dot");
-
-            Assert.IsTrue(ctx.CfgBuilder.AllCfgBuilder.Count == 1);
-            Assert.IsNotNull(ctx.CfgBuilder.AllCfgBuilder);
-
-            ctx.CfgBuilder.Cfg.SetupPredecessorEdges();
-
-            CfgTestUtils.GenDotCfgAndCompare(ctx.CfgBuilder.Cfg, path, expectedPath, true, true);
         }
     }
 }

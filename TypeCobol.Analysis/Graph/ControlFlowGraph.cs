@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -398,7 +399,6 @@ namespace TypeCobol.Analysis.Graph
                 }
             }
         }
-  
 
         /// <summary>
         /// Iterative version of DFS Depth First Search implementation using predecessors edge.
@@ -409,7 +409,8 @@ namespace TypeCobol.Analysis.Graph
             System.Collections.BitArray discovered = new System.Collections.BitArray(AllBlocks.Count);
             foreach (var root in TerminalsBlocks)
             {
-                Stack<Tuple<BasicBlock<N, D>, int, BasicBlock<N, D>>> stack = new Stack<Tuple<BasicBlock<N, D>, int, BasicBlock<N, D>>>();
+                Stack<Tuple<BasicBlock<N, D>, int, BasicBlock<N, D>>> stack =
+                    new Stack<Tuple<BasicBlock<N, D>, int, BasicBlock<N, D>>>();
                 stack.Push(new Tuple<BasicBlock<N, D>, int, BasicBlock<N, D>>(root, -1, null));
                 while (stack.Count > 0)
                 {
@@ -420,16 +421,77 @@ namespace TypeCobol.Analysis.Graph
                     if (!discovered[block.Index])
                     {
                         if (!callback(block, succEdge, succBlock, this))
-                        {   //Don't traverse edges
+                        {
+                            //Don't traverse edges
                             continue;
                         }
+
                         foreach (var edge in block.PredecessorEdges)
                         {
-                            stack.Push(new Tuple<BasicBlock<N, D>, int, BasicBlock<N, D>>(PredecessorEdges[edge], edge, block));
+                            stack.Push(new Tuple<BasicBlock<N, D>, int, BasicBlock<N, D>>(PredecessorEdges[edge], edge,
+                                block));
                         }
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// The DFS callback static method for dumping a CFG
+        /// </summary>
+        /// <param name="writer">Writer function</param>
+        /// <param name="block"></param>
+        /// <param name="edge"></param>
+        /// <param name="adjacentBlock"></param>
+        /// <param name="cfg"></param>
+        /// <returns>true</returns>
+        private bool DumpCallback(Func<string, bool> writer, BasicBlock<N, D> block, int edge, BasicBlock<N, D> adjacentBlock, ControlFlowGraph<N, D> cfg)
+        {
+            writer("BLOCK["+block.Index + "] -> {");
+            string sep = "";
+            //Display Successor block index.
+            foreach (int i in block.SuccessorEdges)
+            {
+                writer(sep);
+                writer(this.SuccessorEdges[i].Index.ToString());
+                sep = string.Intern(",");
+            }
+            writer("}");
+            writer(System.Environment.NewLine);
+            return true;
+        }
+
+        /// <summary>
+        /// Dump the CFG using the System Out console.
+        /// </summary>
+        public void Dump()
+        {
+            Dump(System.Console.Out);
+        }
+
+        /// <summary>
+        /// Dump the Cfg using the given writer
+        /// </summary>
+        /// <param name="writer">The writer</param>
+        public void Dump(TextWriter writer)
+        {
+            DFS((b, e, a, c) => DumpCallback((s) =>
+            {
+                writer.Write(s);
+                return true;
+            }, b, e, a, c));
+        }
+
+        /// <summary>
+        /// Dump the the CFG using the connect debugger output.
+        /// </summary>
+        public void DebugDump()
+        {
+            DFS((b, e, a, c) => DumpCallback((s) =>
+            {
+                System.Diagnostics.Trace.Write(s);
+                return true;
+            }, b, e, a, c));
         }
     }
 }

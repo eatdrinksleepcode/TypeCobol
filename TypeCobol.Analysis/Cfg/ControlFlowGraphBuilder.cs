@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -115,6 +117,13 @@ namespace TypeCobol.Analysis.Cfg
             /// instruction, a dot graph will not show the enclosing section or paragraph in a cluster rectangle.
             /// </summary>
             internal bool IsExplicitIterativeGroup { get; set; }
+
+            /// <summary>
+            /// To detect recursivity on PERFORM Procedure calls.
+            /// This is a bit array of GroupIndex encountered during the workflow
+            /// call of other PERFORM.
+            /// </summary>
+            internal BitArray RecursivityGroupSet { get; set; }
 
             /// <summary>
             /// Constructor.
@@ -1438,13 +1447,10 @@ namespace TypeCobol.Analysis.Cfg
                     {//If this block has been already add, this mean there are recursive GOTOs
                         if (block is BasicBlockForNodeGroup g0)
                         {   //This mean we are recursively cloning the same group --> stop, don't add a new instance in the newGroups queue.
-                            var recurBlock = newGroups.FirstOrDefault(b => b.GroupIndex == g0.GroupIndex);
-                            if (recurBlock != null)
+                            if (group.RecursivityGroupSet.Get(g0.GroupIndex))
                             {
-                                clonedBlockIndexMap[block.Index] = recurBlock.Index;
-                                group.AddBlock(recurBlock);
-
                                 //Report Recursivity
+                                block.FullInstruction = true;
                                 var firstGroup = group.Group.FirstOrDefault(b =>
                                     b.Instructions.Count > 0 && b.Instructions.Any(i => i.CodeElement != null));         
                                 Diagnostic d = new Diagnostic(MessageCode.ControlFlowGraphDiagnostic,
@@ -1452,20 +1458,39 @@ namespace TypeCobol.Analysis.Cfg
                                     firstGroup.Instructions.First.Value.CodeElement.Column,
                                     firstGroup.Instructions.First.Value.CodeElement.Line,
                                     string.Format(Resource.RecursiveBasicBlockGroupInstructions, group.ToString()));
+                                block.FullInstruction = false;
                                 Diagnostics.Add(d);
+                                System.Diagnostics.Trace.WriteLine(d.Message);
+                            }
+                            var recurBlock = newGroups.FirstOrDefault(b => b.GroupIndex == g0.GroupIndex);
+                            if (recurBlock != null)
+                            {
+                                clonedBlockIndexMap[block.Index] = recurBlock.Index;
+                                group.AddBlock(recurBlock);
                                 continue;
                             }
                         }
-                        BasicBlockForNode clonedBlock = (BasicBlockForNode)block.Clone();
-                        group.AddBlock(clonedBlock);
-                        clonedBlock.Index = this.CurrentProgramCfgBuilder.Cfg.AllBlocks.Count;
-                        this.CurrentProgramCfgBuilder.Cfg.AllBlocks.Add(clonedBlock);
-                        clonedBlockIndexMap[block.Index] = clonedBlock.Index;
-                        if (clonedBlock is BasicBlockForNodeGroup g)
-                        {//We are cloning a group it's corresponding procedure should also be resolved --> add it in newGroups
-                            newGroups.Add(g);
-                            g.Group = new LinkedList<BasicBlock<Node, D>>();
-                            g.TerminalBlocks = null;
+
+                        if (block is  BasicBlockForNodeGroup gs && group.GroupIndex == gs.GroupIndex)
+                        {   //Identity group, don't duplicate it.'
+                            clonedBlockIndexMap[block.Index] = block.Index;
+                        }
+                        else
+                        {
+                            BasicBlockForNode clonedBlock = (BasicBlockForNode) block.Clone();
+                            group.AddBlock(clonedBlock);
+                            clonedBlock.Index = this.CurrentProgramCfgBuilder.Cfg.AllBlocks.Count;
+                            this.CurrentProgramCfgBuilder.Cfg.AllBlocks.Add(clonedBlock);
+                            clonedBlockIndexMap[block.Index] = clonedBlock.Index;
+                            if (clonedBlock is BasicBlockForNodeGroup g)
+                            {
+                                //We are cloning a group it's corresponding procedure should also be resolved --> add it in newGroups
+                                newGroups.Add(g);
+                                g.Group = new LinkedList<BasicBlock<Node, D>>();
+                                g.TerminalBlocks = null;
+                                group.RecursivityGroupSet.Set(g.GroupIndex, true);
+                                g.RecursivityGroupSet = (BitArray) group.RecursivityGroupSet.Clone();
+                            }
                         }
                     }
                     else
@@ -1711,6 +1736,8 @@ namespace TypeCobol.Analysis.Cfg
                 {
                     PerformProcedure p = item.Item1;
                     BasicBlockForNodeGroup group = item.Item2;
+                    group.RecursivityGroupSet = new BitArray(GroupCounter + 1);
+                    group.RecursivityGroupSet.Set(group.GroupIndex, true);
                     ResolvePendingPERFORMProcedure(p, group, newGroups);
                 }
 
@@ -1727,10 +1754,14 @@ namespace TypeCobol.Analysis.Cfg
                 {
                     BasicBlockForNodeGroup group = item.Item2;
                     topologicalGroupOrder[group.GroupIndex] = group;
+                    //Memory unused here
+                    group.RecursivityGroupSet = null;
                 }
                 foreach (var group in newGroups)
                 {
                     topologicalGroupOrder[group.GroupIndex] = group;
+                    //Memory unused here
+                    group.RecursivityGroupSet = null;
                 }
                 foreach (var group in topologicalGroupOrder.Values)
                 {
