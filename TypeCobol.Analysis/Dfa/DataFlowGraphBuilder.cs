@@ -208,14 +208,6 @@ namespace TypeCobol.Analysis.Dfa
         }
 
         /// <summary>
-        /// Compute the Use Def List
-        /// </summary>
-        public void ComputeUseDefList()
-        {
-
-        }
-
-        /// <summary>
         /// Determine if GEN set has been calculated
         /// </summary>
         public bool IsGenSetCalculated
@@ -254,10 +246,6 @@ namespace TypeCobol.Analysis.Dfa
                 {
                     if (block.Instructions != null && block.Data.DefCount > 0)
                     {
-                        if (block.Data == null)
-                        {
-                            block.Data = new DfaBasicBlockInfo<V>();
-                        }
                         Dictionary<V, int> variables = new Dictionary<V, int>();
                         //Allocate a temporary gen set.
                         BitSet gen = new BitSet(DefList.Count);
@@ -312,8 +300,7 @@ namespace TypeCobol.Analysis.Dfa
                     {
                         if (def.BlockIndex == block.Index)
                             continue;//Inside the current block
-                        int defIndex;
-                        if (block.Data.GenVariableDictionary.TryGetValue(def.Variable, out defIndex))
+                        if (block.Data.GenVariableDictionary.ContainsKey(def.Variable))
                         {//The def variable is in the Block's GEN, kill the definition outside the block.
                             kill.Set(def.Index);
                         }
@@ -372,8 +359,8 @@ namespace TypeCobol.Analysis.Dfa
         /// OUT sets represent definitions which reach a point just after the last instruction of a basic block.
         /// The equations relating IN and OUT sets are:
         /// 
-        ///     OUT(b) = IN(b) - KILL(b) U GEN(b)
-        ///     IN(b) = U OUT(p)  whepre p belongs to Predecessor(b)
+        ///     OUT(b) = (IN(b) - KILL(b)) U GEN(b)
+        ///     IN(b) = U OUT(p)  where p belongs to Predecessor(b)
         /// </summary>
         public void ComputeInOutSet()
         {
@@ -397,7 +384,7 @@ namespace TypeCobol.Analysis.Dfa
                     {
                         if (b.PredecessorEdges != null)
                         {
-                            //// IN(b) = U OUT(p)  whepre p belongs to Predecessor(b)
+                            //// IN(b) = U OUT(p)  where p belongs to Predecessor(b)
                             foreach (var p in b.PredecessorEdges)
                             {
                                 var a = Cfg.PredecessorEdges[p];
@@ -448,7 +435,7 @@ namespace TypeCobol.Analysis.Dfa
                 if (IsUseDefSetCalculated)
                     return;
 
-                //prerequisites: UseLiast and Compute the IN-OUT sets
+                //prerequisites: UseList and Compute the IN-OUT sets
                 ComputeUseList();
                 ComputeInOutSet();
 
