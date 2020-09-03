@@ -1460,7 +1460,7 @@ namespace TypeCobol.Analysis.Cfg
                                     string.Format(Resource.RecursiveBasicBlockGroupInstructions, group.ToString()));
                                 block.FullInstruction = false;
                                 Diagnostics.Add(d);
-                                System.Diagnostics.Trace.WriteLine(d.Message);
+                                //System.Diagnostics.Trace.WriteLine(d.Message);
                             }
                             var recurBlock = newGroups.FirstOrDefault(b => b.GroupIndex == g0.GroupIndex);
                             if (recurBlock != null)
