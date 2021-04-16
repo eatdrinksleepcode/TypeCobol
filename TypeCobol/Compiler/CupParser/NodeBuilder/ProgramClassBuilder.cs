@@ -164,14 +164,7 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
             }
             else
             {
-                long parentLevel = level == 66 ? 1 : level - 1; //level-66 should be attached to their corresponding level-1.
-                while (CurrentNode.CodeElement is DataDefinitionEntry entry)
-                {
-                    //Exit() till we reach or get over expected parent level.
-                    if (entry.LevelNumber == null) break;
-                    if (entry.LevelNumber.Value <= parentLevel) break;
-                    Exit();
-                }
+                ExitOutOfLevel(level);
             }
         }
 
@@ -179,14 +172,26 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
         private void ExitLastLevel1Definition()
         {
             _CurrentTypeDefinition = null;
-            Node lastLevel1Definition = null;
-            while (CurrentNode.CodeElement is DataDefinitionEntry)
+            ExitOutOfLevel(null);
+        }
+
+        private void ExitOutOfLevel(long? level)
+        {
+            var parentLevel = level - 1;
+            if (level == 66)
+                parentLevel = 1; //level-66 should be attached to their corresponding level-1.
+            else if (level == 77)
+                parentLevel = 0;
+
+            Node lastDataDefinition = null;
+            while (CurrentNode.CodeElement is DataDefinitionEntry entry)
             {
-                lastLevel1Definition = CurrentNode;
+                if (entry.LevelNumber?.Value <= parentLevel) return;
+                lastDataDefinition = CurrentNode;
                 Exit();
             }
-            if (lastLevel1Definition != null)
-                Dispatcher.OnLevel1Definition((DataDefinition) lastLevel1Definition);//Call is made also for level-77.
+            if (lastDataDefinition != null)
+                Dispatcher.OnLevel1Definition((DataDefinition) lastDataDefinition);//Call is made also for level-77.
         }
 
         public virtual void StartCobolCompilationUnit()
