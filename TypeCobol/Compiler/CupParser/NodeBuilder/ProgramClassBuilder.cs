@@ -157,19 +157,12 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
         private void SetCurrentNodeToTopLevelItem(IntegerValue levelnumber)
         {
             long level = levelnumber?.Value ?? 1;
-            if (level == 1 || level == 77)
-            {
-                //level-1 and level-77 should be attached directly into the section.
-                ExitLastLevel1Definition();
-            }
-            else
-            {
-                ExitOutOfLevel(level);
-            }
+            ExitOutOfLevel(level);
         }
 
-        /// <summary>Exit last level-01 data definition entry, as long as all its subordinates.</summary>
-        private void ExitLastLevel1Definition()
+        /// <summary>Exit last top-level data definition entry, as well as all its subordinates.</summary>
+        /// <remarks>This should generally be a level-01 definition, but top-level entries at higher level numbers are also accounted for.</remarks>
+        private void ExitLastTopLevelDataDefinition()
         {
             _CurrentTypeDefinition = null;
             ExitOutOfLevel(null);
@@ -410,7 +403,7 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
 
         public virtual void EndFileSection()
         {
-            ExitLastLevel1Definition();
+            ExitLastTopLevelDataDefinition();
             Exit();
             _IsInsideFileSectionContext = false;
             Dispatcher.EndFileSection();
@@ -426,7 +419,7 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
 
         public virtual void EndGlobalStorageSection()
         {
-            ExitLastLevel1Definition();
+            ExitLastTopLevelDataDefinition();
             Exit(); // Exit GlobalStorageSection
             _IsInsideGlobalStorageSection = false;
             Dispatcher.EndGlobalStorageSection();
@@ -434,7 +427,7 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
 
         public virtual void StartFileDescriptionEntry(FileDescriptionEntry entry)
         {
-            ExitLastLevel1Definition();
+            ExitLastTopLevelDataDefinition();
             Enter(new FileDescriptionEntryNode(entry), entry);
             Dispatcher.StartFileDescriptionEntry(entry);
         }
@@ -639,7 +632,7 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
 
         public virtual void EndWorkingStorageSection()
         {
-            ExitLastLevel1Definition();
+            ExitLastTopLevelDataDefinition();
             Exit(); // Exit WorkingStorageSection
             _IsInsideWorkingStorageContext = false;
             Dispatcher.EndWorkingStorageSection();
@@ -658,7 +651,7 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
 
         public virtual void EndLocalStorageSection()
         {
-            ExitLastLevel1Definition();
+            ExitLastTopLevelDataDefinition();
             Exit(); // Exit LocalStorageSection
             _IsInsideLocalStorageSectionContext = false;
             Dispatcher.EndLocalStorageSection();
@@ -677,7 +670,7 @@ namespace TypeCobol.Compiler.CupParser.NodeBuilder
 
         public virtual void EndLinkageSection()
         {
-            ExitLastLevel1Definition();
+            ExitLastTopLevelDataDefinition();
             Exit(); // Exit LinkageSection
             _IsInsideLinkageSectionContext = false;
             Dispatcher.EndLinkageSection();
