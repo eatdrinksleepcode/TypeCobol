@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Net.Mail;
 using System.IO;
 using System.Diagnostics;
-using System.DirectoryServices.AccountManagement;
 using System.Reflection;
 using NLog;
 using System.Text;
@@ -166,6 +165,7 @@ namespace Analytics
 
         public void SendMail(Exception exception, List<string> sourceFilePaths, List<string> CopyFolders, string config)
         {
+#if DIRECTORY_SERVICES
             try
             {
                 if (TelemetryVerboseLevel == TelemetryVerboseLevel.Disable) return;
@@ -233,6 +233,7 @@ namespace Analytics
 #endif
             }
             catch (Exception e) { logger.Fatal(e); }
+#endif
         }
 
         private static string CreateSHA256(string text)
