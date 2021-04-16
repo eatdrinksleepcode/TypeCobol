@@ -52,10 +52,10 @@ namespace TypeCobol.Compiler
         public ColumnsLayout ColumnsLayout { get; }
 
         // Most often used document formats
-        public static DocumentFormat ZOsReferenceFormat = new DocumentFormat(IBMCodePages.GetDotNetEncodingFromIBMCCSID(1147), EndOfLineDelimiter.FixedLengthLines, 80, ColumnsLayout.CobolReferenceFormat);
-        public static DocumentFormat RDZReferenceFormat = new DocumentFormat(Encoding.UTF8, EndOfLineDelimiter.CrLfCharacters, 0, ColumnsLayout.CobolReferenceFormat);
-        public static DocumentFormat FreeTextFormat = new DocumentFormat(Encoding.GetEncoding(1252), EndOfLineDelimiter.CrLfCharacters, 0, ColumnsLayout.FreeTextFormat);
-        public static DocumentFormat FreeUTF8Format = new DocumentFormat(Encoding.UTF8, EndOfLineDelimiter.CrLfCharacters, 0, ColumnsLayout.FreeTextFormat);
+        public static DocumentFormat ZOsReferenceFormat => new DocumentFormat(IBMCodePages.GetDotNetEncodingFromIBMCCSID(1147), EndOfLineDelimiter.FixedLengthLines, 80, ColumnsLayout.CobolReferenceFormat);
+        public static DocumentFormat RDZReferenceFormat => new DocumentFormat(Encoding.UTF8, EndOfLineDelimiter.CrLfCharacters, 0, ColumnsLayout.CobolReferenceFormat);
+        public static DocumentFormat FreeTextFormat => new DocumentFormat(Encoding.GetEncoding(1252), EndOfLineDelimiter.CrLfCharacters, 0, ColumnsLayout.FreeTextFormat);
+        public static DocumentFormat FreeUTF8Format => new DocumentFormat(Encoding.UTF8, EndOfLineDelimiter.CrLfCharacters, 0, ColumnsLayout.FreeTextFormat);
 
         /// <summary>
         /// Used to retrieve TextArea type in Cobol reference format from token position
