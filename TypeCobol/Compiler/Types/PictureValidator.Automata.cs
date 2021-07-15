@@ -13,88 +13,173 @@ namespace TypeCobol.Compiler.Types
             private static readonly int _SpecialCharactersCount = Enum.GetValues(typeof(SC)).Length;
 
             /// <summary>
+            /// Non Floating Insertion Symbol Column
+            /// </summary>
+            private const int NFIS_COLUMN = 0;
+            private const int NFIS_CR_COLUMN = 9;
+            private const int NFIS_DB_COLUMN = 10;
+            private const int NFIS_CS_COLUMN = 11;
+            private const int NFIS_E_COLUMN = 12;
+            /// <summary>
+            /// Floating Insertion Symbol Column
+            /// </summary>
+            private const int FIS_COLUMN = 13;
+            private const int FIS_PLUS_MINUS_COLUMN = FIS_COLUMN + 4;
+            private const int FIS_CS_COLUMN = FIS_COLUMN + 8;
+            /// <summary>
+            /// Other Symbol Column
+            /// </summary>
+            private const int OS_COLUMN = 23;
+            private const int OS_G_COLUMN = 30;
+            private const int OS_N_COLUMN = 31;
+
+            /// <summary>
+            /// Special Symbols Row in the States
+            /// </summary>
+            private static readonly SC[] SCRow ={ SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.DOT, SC.PLUS, SC.MINUS, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.CS,SC.E,
+                       SC.Z, SC.STAR, SC.Z, SC.STAR, SC.PLUS, SC.MINUS, SC.PLUS, SC.MINUS, SC.CS, SC.CS,
+                       SC.NINE, SC.A, SC.X, SC.S, SC.V, SC.P, SC.P, SC.G, SC.N};
+
+            /// <summary>
             /// States of the automata. Each state lists all allowed transitions from one SC to another.
             /// </summary>
             private static readonly bool[][] _States =
             {
                 //State 0: Start Symbols
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.DOT, SC.PLUS, SC.MINUS, SC.Z, SC.STAR, SC.CS, SC.NINE, SC.A, SC.X, SC.S, SC.V, SC.P, SC.G, SC.N),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, true/*.*/, true/*+*/, true/*-*/, true/*+*/, true/*-*/, true/*CR*/, true/*DB*/, true/*CS*/,true/*E*/,
+                       true/*Z*/, true/* * */, true/*Z*/, true/* * */, true/*+*/, true/*-*/, true/*+*/, true/*-*/, true/*CS*/, true/*CS*/,
+                       true/*9*/, true/*A*/, true/*X*/, true/*S*/, true/*V*/, true/*P*/, true/*P*/, true/*G*/, true/*N)*/
+                },
 
                 //------------------------------------------------------
                 // NON FLOATING INSERTION SYMBOLS
                 //------------------------------------------------------
                 //State 1: --B-->(1)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.DOT, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.Z, SC.STAR, SC.CS, SC.NINE, SC.A, SC.X, SC.V, SC.P, SC.G, SC.N),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, true/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/, false/*E*/,
+                       true/*Z*/, true/* * */, true/*Z*/, true/* * */, true/*+*/, true/*-*/, true/*+*/, true/*-*/, true/*CS*/, true/*CS*/,
+                       true/*9*/, true/*A*/, true/*X*/, false/*S*/, true/*V*/, false/*P*/, true/*P*/, true/*G*/, true/*N)*/
+                },
                 //State 2: --[0|/]-->(2)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.DOT, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.Z, SC.STAR, SC.CS, SC.NINE, SC.A, SC.X, SC.V, SC.P, SC.N),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, true/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/, false/*E*/,
+                       true/*Z*/, true/* * */, true/*Z*/, true/* * */, true/*+*/, true/*-*/, true/*+*/, true/*-*/, true/*CS*/, true/*CS*/,
+                       true/*9*/, true/*A*/, true/*X*/, false/*S*/, true/*V*/, false/*P*/, true/*P*/, false/*G*/, true/*N)*/
+                },
                 //State 3: --,-->(3)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.DOT, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.Z, SC.STAR, SC.CS, SC.E, SC.NINE, SC.V, SC.P),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, true/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/, false/*E*/,
+                       true/*Z*/, true/* * */, true/*Z*/, true/* * */, true/*+*/, true/*-*/, true/*+*/, true/*-*/, true/*CS*/, true/*CS*/,
+                       true/*9*/, false/*A*/, false/*X*/, false/*S*/, true/*V*/, false/*P*/, true/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 4: --.-->(4)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.Z, SC.STAR, SC.CS, SC.E, SC.NINE),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, false/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/, false/*E*/,
+                       true/*Z*/, true/* * */, false/*Z*/, false/* * */, true/*+*/, true/*-*/, false/*+*/, false/*-*/, true/*CS*/, false/*CS*/,
+                       true/*9*/, false/*A*/, false/*X*/, false/*S*/, false/*V*/, false/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 5: --[+|-]-->(5)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.DOT, SC.Z, SC.STAR, SC.CS, SC.NINE, SC.V, SC.P),
+                new bool[]{ false/*B*/, false/*0*/, false/* / */, false/*,*/, false/*.*/, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, false/*CS*/, false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CS*/, false/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, false/*S*/, false/*V*/, false/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 6: --[+|-]-->(6)
-                State(),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, true/*.*/, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/,true/*E*/,
+                       true/*Z*/, true/* * */, true/*Z*/, true/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, true/*CS*/, true/*CS*/,
+                       true/*9*/, false/*A*/, false/*X*/, false/*S*/, true/*V*/, true/*P*/, true/*P*/, false/*G*/, false/*N)*/
+                },
                 //State : --[CR|DB]-->()
-                State(),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, true/*.*/, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/,false/*E*/,
+                       true/*Z*/, true/* * */, true/*Z*/, true/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, true/*CS*/, true/*CS*/,
+                       true/*9*/, false/*A*/, false/*X*/, false/*S*/, true/*V*/, true/*P*/, true/*P*/, false/*G*/, false/*N)*/
+                },
                 //State : --CS-->(8)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.DOT, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.Z, SC.STAR, SC.NINE, SC.V, SC.P),
+                new bool[]{ false/*B*/, false/*0*/, false/* / */, false/*,*/, false/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, false/*CS*/, false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CS*/, false/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, false/*S*/, false/*V*/, false/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
+
                 //State : --E-->(9)
-                State(SC.PLUS, SC.MINUS),
+                new bool[]{ false/*B*/, false/*0*/, false/* / */, true/*,*/, true/*.*/, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, false/*CS*/, false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CS*/, false/*CS*/,
+                       true/*9*/, false/*A*/, false/*X*/, false/*S*/, true/*V*/, false/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
 
                 //------------------------------------------------------
                 //FLOATING INSERTION SYMBOLS
                 //------------------------------------------------------
                 //State 10: --[Z|*]-->(10)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.DOT, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.Z, SC.STAR, SC.NINE, SC.V, SC.P),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, false/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/,false/*E*/,
+                       true/*Z*/, true/* * */, false/*Z*/, false/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CS*/, false/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, false/*S*/, false/*V*/, false/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 11: --[Z|*]-->(11)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.Z, SC.STAR),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, true/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/,false/*E*/,
+                       true/*Z*/, true/* * */, true/*Z*/, true/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CS*/, false/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, false/*S*/, true/*V*/, false/*P*/, true/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 12: --[+|-]-->(12)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.DOT, SC.PLUS, SC.MINUS, SC.NINE, SC.V, SC.P),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, false/*.*/, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/,false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CS*/, false/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, false/*S*/, true/*V*/, false/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 13: --[+|-]-->(13)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.PLUS, SC.MINUS),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, true/*.*/, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/,false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, true/*+*/, true/*-*/, true/*+*/, true/*-*/, false/*CS*/, false/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, false/*S*/, true/*V*/, false/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 14: --CS-->(14)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.DOT, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.CS, SC.NINE, SC.V, SC.P),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, false/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, false/*CS*/,false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, true/*CS*/, false/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, false/*S*/, false/*V*/, false/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 15: --CS-->(15)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.CS),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, true/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, false/*CS*/,false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, true/*CS*/, true/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, false/*S*/, true/*V*/, false/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
 
                 //------------------------------------------------------
                 //OTHER SYMBOLS
                 //------------------------------------------------------
                 //State 16: --9-->(16)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.DOT, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.E, SC.NINE, SC.A, SC.X, SC.V, SC.P),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, true/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/,false/*E*/,
+                       true/*Z*/, true/* * */, false/*Z*/, false/* * */, true/*+*/, true/*-*/, false/*+*/, false/*-*/, true/*CS*/, false/*CS*/,
+                       true/*9*/, true/*A*/, true/*X*/, true/*S*/, true/*V*/, false/*P*/, true/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 17: --[A|X]-->(17)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.NINE, SC.A, SC.X),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, false/*,*/, false/*.*/, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, false/*CS*/,false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CS*/, false/*CS*/,
+                       true/*9*/, true/*A*/, true/*X*/, false/*S*/, false/*V*/, false/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
+
                 //State 18: --S-->(18)
-                State(SC.NINE, SC.V, SC.P),
+                new bool[]{ false/*B*/, false/*0*/, false/* / */, false/*,*/, false/*.*/, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, false/*CS*/,false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CS*/, false/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, false/*S*/, false/*V*/, false/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 19: --V-->(19)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.E, SC.Z, SC.STAR, SC.CS, SC.NINE, SC.P),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, false/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/,false/*E*/,
+                       true/*Z*/, true/* * */, false/*Z*/, false/* * */, true/*+*/, true/*-*/, false/*+*/, false/*-*/, true/*CS*/, false/*CS*/,
+                       true/*9*/, false/*A*/, false/*X*/, true/*S*/, false/*V*/, true/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 20: --P-->(20)
-                State(SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.V, SC.P),
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, true/*,*/, false/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/,false/*E*/,
+                       true/*Z*/, true/* * */, false/*Z*/, false/* * */, true/*+*/, true/*-*/, false/*+*/, false/*-*/, true/*CS*/, false/*CS*/,
+                       true/*9*/, false/*A*/, false/*X*/, true/*S*/, false/*V*/, true/*P*/, false/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 21: --P-->(21)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.COMMA, SC.PLUS, SC.MINUS, SC.CR, SC.DB, SC.Z, SC.STAR, SC.NINE, SC.P),
+                new bool[]{ false/*B*/, false/*0*/, false/* / */, false/*,*/, false/*.*/, true/*+*/, true/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, true/*CS*/,false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CS*/, false/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, true/*S*/, true/*V*/, false/*P*/, true/*P*/, false/*G*/, false/*N)*/
+                },
                 //State 22: --G-->(22)
-                State(SC.B, SC.G),
+                new bool[]{ true/*B*/, false/*0*/, false/* / */, false/*,*/, false/*.*/, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, false/*CS*/,false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CS*/, false/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, false/*S*/, false/*V*/, false/*P*/, false/*P*/, true/*G*/, false/*N)*/
+                },
                 //State 23: --N-->(23)
-                State(SC.B, SC.ZERO, SC.SLASH, SC.N)
+                new bool[]{ true/*B*/, true/*0*/, true/* / */, false/*,*/, false/*.*/, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CR*/, false/*DB*/, false/*CS*/,false/*E*/,
+                       false/*Z*/, false/* * */, false/*Z*/, false/* * */, false/*+*/, false/*-*/, false/*+*/, false/*-*/, false/*CS*/, false/*CS*/,
+                       false/*9*/, false/*A*/, false/*X*/, false/*S*/, false/*V*/, false/*P*/, false/*P*/, false/*G*/, true/*N)*/
+                },
             };
-
-            /// <summary>
-            /// Create a state
-            /// </summary>
-            /// <param name="characterTransitions">Transition table for this state</param>
-            private static bool[] State(params SC[] characterTransitions)
-            {
-                System.Diagnostics.Debug.Assert(characterTransitions != null);
-                var result = new bool[_SpecialCharactersCount];
-                foreach (var sc in characterTransitions)
-                {
-                    System.Diagnostics.Debug.Assert(result[(int) sc] == false); //Avoid transition redefinition
-                    result[(int) sc] = true;
-                }
-
-                return result;
-            }
 
             private readonly PictureValidator _validator;
 
@@ -119,6 +204,85 @@ namespace TypeCobol.Compiler.Types
                 _validator = validator;
             }
 
+            private bool CheckTransition(int state, SC c, int index, bool[] PState, bool Z_seen_Star_seen, bool vSeen)
+            {
+                int column = -1;
+                switch(c)
+                {
+                    case SC.B:
+                    case SC.ZERO:
+                    case SC.SLASH:
+                    case SC.COMMA:
+                    case SC.DOT:
+                        column = (int)c;
+                            break;
+                    case SC.PLUS:
+                    case SC.MINUS:
+                        {
+                            if (!IsCurrentIndexInsideFloatingInsertion)
+                            {
+
+                                if (IsAtFirst(index))
+                                    column = NFIS_COLUMN + (int)c;
+                                else if (Z_seen_Star_seen)
+                                    column = NFIS_COLUMN + (int)c + 2;
+                                else
+                                    column = NFIS_COLUMN + (int)c;
+                            }
+                            else
+                            {
+                                column = FIS_PLUS_MINUS_COLUMN + (int)c - (int)SC.PLUS + (_isBeforeDecimalPoint ? 0 : 2);
+                            }                            
+                        }
+                        break;
+                    case SC.CR:
+                        column = NFIS_CR_COLUMN;
+                        break;
+                    case SC.DB:
+                        column = NFIS_DB_COLUMN;
+                        break;
+                    case SC.CS:
+                        {
+                            if (!IsCurrentIndexInsideFloatingInsertion)
+                            {
+                                column = NFIS_CS_COLUMN + (!vSeen ? 0 : 1);
+                            }
+                            else
+                            {
+                                column = FIS_CS_COLUMN + (_isBeforeDecimalPoint ? 0 : 1);
+                            }
+                        }
+                        break;
+                    case SC.E:
+                        column = NFIS_E_COLUMN;
+                        break;
+                    case SC.Z:
+                    case SC.STAR:
+                        column = FIS_COLUMN + (int)c - (int)SC.Z + (_isBeforeDecimalPoint ? 0 : 2);
+                        break;
+                    case SC.NINE:
+                    case SC.A:
+                    case SC.X:
+                    case SC.S:
+                    case SC.V:
+                        column = OS_COLUMN + (int)c - (int)SC.NINE;
+                        break;
+                    case SC.P:
+                        column = OS_COLUMN + (int)c - (int)SC.NINE + (PState[index] ? 0 : 1);
+                        break;
+                    case SC.G:
+                        column = OS_G_COLUMN;
+                        break;
+                    case SC.N:
+                        column = OS_N_COLUMN;
+                        break;
+                    default:
+                        column = (int)c;//Should never happend
+                        break;
+                }
+                return _States[state][column];
+            }
+
             /// <summary>
             /// Determines if the current Sequence Index is inside the Floating Insertion Symbols range.
             /// </summary>
@@ -132,11 +296,19 @@ namespace TypeCobol.Compiler.Types
             /// Return true if the current sequence index is the first symbol of the sequence.
             /// </summary>
             private bool IsFirstSymbol => _sequenceIndex == 0;
+            private bool IsAtFirst(int index)
+            {
+                return index == 0;
+            }
 
             /// <summary>
             /// Return true if the current sequence index is the last symbol of the sequence.
             /// </summary>
             private bool IsLastSymbol => _sequenceIndex == _sequence.Length - 1;
+            private bool IsAtLast(int index)
+            {
+                return index == _sequence.Length - 1;
+            }
 
             public bool Run(Character[] sequence, List<string> validationMessages)
             {
@@ -147,35 +319,47 @@ namespace TypeCobol.Compiler.Types
                 int S_count = 0;               //Count of either CR, DB, + or - symbols
                 int V_count = 0;               //Count of V symbol
                 bool Z_seen = false;           //Have we seen Z ?
+                bool V_seen = false;
                 bool Star_seen = false;        //Have we seen '*' ?
                 bool CS_signSizeAdded = false; //Flag to detect the first time we encounter a CS symbol during size computation
+                //Remeber P state for assumed V
+                bool[] PState = new bool[_sequence.Length];
 
                 //Run automata
                 int state = 0;
                 while (_sequenceIndex < _sequence.Length)
                 {
                     Character c = _sequence[_sequenceIndex];
-
-                    if (!_States[state][(int) c.SpecialChar])
-                    {
+                    if (state == 0 && !CheckTransition(state, c.SpecialChar, _sequenceIndex, PState, Z_seen || Star_seen, V_seen))
+                    {   // Check that the first character can start le PICTURE
                         //No transition allowed
                         validationMessages.Add(string.Format(INVALID_SYMBOL_POSITION, _validator.SC2String(c.SpecialChar)));
                         return false;
                     }
 
-                    int nextState = GetState(c);
+                    int nextState = GetState(c, Z_seen || Star_seen);
+                    V_seen = V_seen || c.SpecialChar == SC.V;
+
+                    if (state != 0 && !CheckTransition(nextState, sequence[_sequenceIndex - 1].SpecialChar, _sequenceIndex - 1, PState, Z_seen || Star_seen, V_seen))
+                    {
+                        //No transition allowed
+                        validationMessages.Add(string.Format(INVALID_SYMBOL_POSITION, _validator.SC2String(sequence[_sequenceIndex - 1].SpecialChar)));
+                        return false;
+                    }
+
                     if (!ValidateState(c))
                     {
                         return false;
                     }
+                    PState[_sequenceIndex] = _digitsSeenBeforeP && _isBeforeDecimalPoint;
 
                     state = nextState;
                     _sequenceIndex++;
                 }
 
-                //Successful validation, adjust category then return
+                //Successful validation, adjust category then return CheckCategory
                 AdjustCategory();
-                return true;
+                return CheckCategory();
 
                 //Called when changing transition on the given character, so specific validation actions can be performed here.
                 bool ValidateState(Character c)
@@ -204,6 +388,23 @@ namespace TypeCobol.Compiler.Types
                                 validationMessages.Add(Z_STAR_MUTUALLY_EXCLUSIVE);
                                 return false;
                             }
+                            if (IsLastSymbol)
+                            {// Check that sequence contans only DOT, COMMA or Z or * or CS
+                                foreach (var s in _sequence)
+                                {
+                                    if (s.SpecialChar != SC.B &&
+                                        s.SpecialChar != SC.ZERO &&
+                                        s.SpecialChar != SC.SLASH &&
+                                        s.SpecialChar != SC.COMMA &&
+                                        s.SpecialChar != SC.DOT &&
+                                        s.SpecialChar != SC.CS &&
+                                        s.SpecialChar != SC.Z &&
+                                        s.SpecialChar != SC.STAR &&
+                                        s.SpecialChar != SC.PLUS &&
+                                        s.SpecialChar != SC.MINUS)
+                                        return false;
+                                }
+                            }
                             Category |= PictureCategory.NumericEdited;
                             Digits += c.Count;
                             if (V_count > 0)
@@ -221,6 +422,7 @@ namespace TypeCobol.Compiler.Types
                             Digits += c.Count - 1;
                             break;
                         case SC.E:
+                            Category = PictureCategory.ExternalFloat;
                             break;
                         case SC.A:
                             Category |= PictureCategory.Alphabetic;
@@ -260,6 +462,11 @@ namespace TypeCobol.Compiler.Types
                             break;
                         case SC.DOT:
                         case SC.COMMA:
+                            if ((c.SpecialChar == SC.DOT && this._validator.DecimalPoint == '.' ||
+                                    c.SpecialChar == SC.COMMA && this._validator.DecimalPoint == ',') &&
+                                    IsLastSymbol)
+                                return false;//The decimal point cannot be the last character                        
+
                             Category |= PictureCategory.NumericEdited;
                             if (!_validator.IsDecimalPoint(c.SpecialChar))
                                 break;
@@ -375,7 +582,7 @@ namespace TypeCobol.Compiler.Types
             /// </summary>
             /// <param name="c">The character to get the handling state</param>
             /// <returns>The state number if one exist, -1 otherwise</returns>
-            private int GetState(Character c)
+            private int GetState(Character c, bool Z_seen_Star_seen)
             {
                 switch (c.SpecialChar)
                 {
@@ -395,9 +602,10 @@ namespace TypeCobol.Compiler.Types
                             {
                                 if (IsFirstSymbol)
                                     return 5;
-                                if (IsLastSymbol)
+                                else if (!_isBeforeDecimalPoint || (IsLastSymbol /*&& Z_seen_Star_seen*/))
                                     return 6;
-                                return 5;
+                                else
+                                    return 5;
                             }
 
                             _digitsSeenBeforeP = true;
@@ -462,7 +670,7 @@ namespace TypeCobol.Compiler.Types
                 {
                     if (_sequence.Length <= 4)
                         return false; //Should contain at least (+|-)*2,(.|V),E
-                    if (Category != PictureCategory.NumericEdited)
+                    if ((Category & PictureCategory.NumericEdited) == 0)
                         return false; //By Default we should end on a NumericEdited category.
                     int i = 0;
                     if (_sequence[i].SpecialChar != SC.PLUS && _sequence[i].SpecialChar != SC.MINUS)
@@ -496,6 +704,233 @@ namespace TypeCobol.Compiler.Types
 
                 bool IsDbcsSequence() => _sequence.Length > 0 && Array.TrueForAll(_sequence, c => c.SpecialChar == SC.G || c.SpecialChar == SC.B);
             }
+
+            /// <summary>
+            /// Check that the sequence metches the associated categoty
+            /// </summary>
+            /// <returns></returns>
+            private bool CheckCategory()
+            {
+                if (this.Category == PictureCategory.ExternalFloat)
+                {
+                    return true;//Already checked by AdjustCategory
+                }
+                if (this.Category == PictureCategory.AlphaNumericEdited)
+                {
+                    return IsAlphaNumericEditedSequence();
+                }
+                if (this.Category == PictureCategory.NumericEdited)
+                {
+                    return IsNumericEditedSequence();
+                }
+                if (this.Category == PictureCategory.AlphaNumeric)
+                {
+                    return IsAlphanumericSequence();
+                }
+                if (this.Category == PictureCategory.Alphabetic)
+                {
+                    return IsAplphabeticSequence();
+                }
+                if (this.Category == PictureCategory.Numeric)
+                {
+                    return IsNumericSequence();
+                }
+                if (this.Category == PictureCategory.NationalEdited)
+                {
+                    return IsNationalEditedSequence();
+                }
+                if (this.Category == PictureCategory.National)
+                {
+                    return IsNationalSequence();
+                }
+                return true;
+            }
+
+            /// <summary>
+            /// Determines if the current sequence after a call to Isvalid method, is in fact an ExternalFloat picture string
+            /// category.
+            /// </summary>
+            /// <returns></returns>
+            public bool IsExternalFloatSequence()
+            {
+                if (this._sequence == null)
+                    return false;
+                if (this._sequence.Length <= 4)
+                    return false;// should contained with at leas (+|-)*2,(.|V),E
+                if (this.Category != PictureCategory.NumericEdited)
+                    return false;//By Defualt is a NumericEdited category.
+                int i = 0;
+                if (_sequence[i].SpecialChar != SC.PLUS && _sequence[i].SpecialChar != SC.MINUS)
+                    return false;
+                int len = _sequence.Length;
+                i++;
+                if (_sequence[i].SpecialChar == SC.DOT || _sequence[i].SpecialChar == SC.V)
+                {
+                    if (_sequence[i + 1].SpecialChar != SC.NINE)
+                        return false;
+                }
+                else if (_sequence[i].SpecialChar == SC.NINE)
+                {
+                    i++;
+                    if (_sequence[i].SpecialChar != SC.DOT & _sequence[i].SpecialChar != SC.V)
+                        return false;
+                    i++;
+                }
+                else
+                    return false;
+                if (i >= len || _sequence[i].SpecialChar == SC.NINE)
+                    i++;
+                if (i >= len || _sequence[i].SpecialChar != SC.E)
+                    return false;
+                if (++i >= len || (_sequence[i].SpecialChar != SC.PLUS && _sequence[i].SpecialChar != SC.MINUS))
+                    return false;
+                if (++i >= len || !(_sequence[i].SpecialChar == SC.NINE && _sequence[i].Count == 2))
+                    return false;
+                return i == (len - 1);
+            }
+
+            /// <summary>
+            /// Determine whether or not the sequence is alphabetic.
+            /// </summary>
+            /// <returns>true if the sequence is alphabetic, false otherwise</returns>
+            public bool IsAplphabeticSequence()
+            {
+                if (this._sequence == null)
+                    return false;
+                if (this._sequence.Length == 0)
+                    return false;
+                return Array.TrueForAll(this._sequence, c => c.SpecialChar == SC.A);
+            }
+
+            /// <summary>
+            /// Determines if the current sequence is a Dbcs seqeunce
+            /// </summary>
+            /// <returns>true if yes, false otherwise</returns>
+            public bool IsDbcsSequence()
+            {
+                if (this._sequence == null)
+                    return false;
+                if (this._sequence.Length == 0)
+                    return false;
+                return Array.TrueForAll(this._sequence,c => c.SpecialChar == SC.G || c.SpecialChar == SC.B);
+            }
+
+            /// <summary>
+            /// Determines if the current sequence is a numeric sequence
+            /// </summary>
+            /// <returns>true if yes, false otherwise</returns>
+            public bool IsNumericSequence()
+            {
+                if (this._sequence == null)
+                    return false;
+                if (this._sequence.Length == 0)
+                    return false;
+                return Array.TrueForAll(this._sequence,c => c.SpecialChar == SC.NINE || c.SpecialChar == SC.S || c.SpecialChar == SC.V || c.SpecialChar == SC.P);
+            }
+
+            /// <summary>
+            /// Determine whether or not the sequence is alphanumeric.
+            /// </summary>
+            /// <returns>true if the sequence is alphanumeric, false otherwise</returns>
+            public bool IsAlphanumericSequence()
+            {
+                if (this._sequence == null)
+                    return false;
+                if (this._sequence.Length == 0)
+                    return false;
+                return Array.TrueForAll(this._sequence,c => c.SpecialChar == SC.NINE || c.SpecialChar == SC.X || c.SpecialChar == SC.A);
+            }
+
+            /// <summary>
+            /// Determine whether or not the sequence is a numeric-edited item
+            /// </summary>
+            /// <returns>true if the sequence is numeric-edited, false otherwise</returns>
+            public bool IsNumericEditedSequence()
+            {
+                if (this._sequence == null)
+                    return false;
+                if (this._sequence.Length == 0)
+                    return false;
+                return Array.TrueForAll(this._sequence,c =>
+                    c.SpecialChar == SC.B ||
+                    c.SpecialChar == SC.P ||
+                    c.SpecialChar == SC.V ||
+                    c.SpecialChar == SC.Z ||
+                    c.SpecialChar == SC.NINE ||
+                    c.SpecialChar == SC.ZERO ||
+                    c.SpecialChar == SC.SLASH ||
+                    c.SpecialChar == SC.COMMA ||
+                    c.SpecialChar == SC.DOT ||
+                    c.SpecialChar == SC.PLUS ||
+                    c.SpecialChar == SC.MINUS ||
+                    c.SpecialChar == SC.STAR ||
+                    c.SpecialChar == SC.CS ||
+                    c.SpecialChar == SC.CR ||
+                    c.SpecialChar == SC.DB
+                );
+            }
+
+            /// <summary>
+            /// Determine whether or not the sequence is a alphanumeric-edited item
+            /// </summary>
+            /// <returns>true if the sequence is alphanumeric-edited, false otherwise</returns>
+            public bool IsAlphaNumericEditedSequence()
+            {
+                if (this._sequence == null)
+                    return false;
+                if (this._sequence.Length == 0)
+                    return false;
+                return Array.TrueForAll(this._sequence,c =>
+                    c.SpecialChar == SC.A ||
+                    c.SpecialChar == SC.X ||
+                    c.SpecialChar == SC.NINE ||
+                    c.SpecialChar == SC.B ||
+                    c.SpecialChar == SC.ZERO ||
+                    c.SpecialChar == SC.SLASH
+                );
+            }
+
+            /// <summary>
+            /// Is a sequence only formed with national characters that is to say only N.
+            /// </summary>
+            /// <returns>true if yes, false otherwise</returns>
+            public bool IsNationalSequence()
+            {
+                if (this._sequence == null)
+                    return false;
+                if (this._sequence.Length == 0)
+                    return false;
+                return Array.TrueForAll(this._sequence,c => c.SpecialChar == SC.N);
+            }
+
+            /// <summary>
+            /// Is a sequence only formed with national edited characters, that is to say with
+            /// symbols N, B, 0 or /, with at least one N and one other symbol in the picture chracter_string.
+            /// </summary>
+            /// <returns>true if yes, false otherwise</returns>
+            public bool IsNationalEditedSequence()
+            {
+                if (this._sequence == null)
+                    return false;
+                if (this._sequence.Length == 0)
+                    return false;
+                bool hasN = false;
+                bool bAll = Array.TrueForAll(this._sequence,c => (hasN |= c.SpecialChar == SC.N) ||
+                                c.SpecialChar == SC.B ||
+                                c.SpecialChar == SC.ZERO ||
+                                c.SpecialChar == SC.SLASH);
+                return hasN && bAll;
+            }
+
+            /// <summary>
+            /// All validation messages if any.
+            /// </summary>
+            public List<String> ValidationMesssage
+            {
+                get;
+                internal set;
+            }
+
         }
     }
 }

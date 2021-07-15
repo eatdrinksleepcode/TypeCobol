@@ -82,6 +82,8 @@ namespace TypeCobol.Test.Types
 
             string[] ifp_pics =
             {
+                "9(5)-",
+                "9(5)+",
                 "-ZZ9.99",
                 "-ZZ9.99",
                 "Z,ZZ9-",
@@ -125,7 +127,7 @@ namespace TypeCobol.Test.Types
             ex_float_pic = "+VE-99";
             result = (new PictureValidator(ex_float_pic)).Validate(out _);
             Assert.IsTrue(result.IsValid);
-            Assert.IsTrue(result.Category != PictureCategory.ExternalFloat);
+            Assert.IsTrue(result.Category == PictureCategory.ExternalFloat);
         }
 
         /// <summary>
@@ -269,8 +271,26 @@ namespace TypeCobol.Test.Types
                 Assert.IsFalse(result.IsValid);
             }
 
+            string[] invalids2 =
+            {
+                "zzzbb+zz-",
+                "aa9b+",
+                "$-***9b",
+                "$v",
+                "b9b$",
+                "*9v-99",
+                ",,.",
+                ",/.",
+                "9/0*"
+            };
+            for (int i = 0; i < invalids2.Length; i++)
+            {
+                PictureValidator.Result result = (new PictureValidator(invalids2[i])).Validate(out _);
+                Assert.IsFalse(result.IsValid);
+            }
+
             //Change other currency symbol than $
-            
+
             PictureValidator.Result result1 = (new PictureValidator("$,$$$.99", currencyDescriptors: CurrencyDescriptor('€'))).Validate(out _);
             Assert.IsFalse(result1.IsValid);
         }
