@@ -388,5 +388,21 @@ namespace TypeCobol.Test.Types
                 Assert.AreEqual(expectedLength, actualLength);
             }
         }
+
+        /// <summary>
+        /// Test about Character-string representation
+        /// </summary>
+        [TestMethod]
+        public void PictureRepresentation()
+        {
+            PictureValidator.Result result = (new PictureValidator("$+")).Validate(out _);
+            Assert.IsFalse(result.IsValid);
+            result = (new PictureValidator("$$")).Validate(out _);
+            Assert.IsTrue(result.IsValid);
+            result = (new PictureValidator("$++")).Validate(out _);
+            Assert.IsTrue(result.IsValid);
+            result = (new PictureValidator("$v")).Validate(out _);
+            Assert.IsFalse(result.IsValid);
+        }
     }
 }

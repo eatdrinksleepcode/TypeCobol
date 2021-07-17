@@ -33,6 +33,8 @@ namespace TypeCobol.Compiler.Types
         private const string MORE_THAN_ONE_V_CHARACTER = "Only one occurrence of V symbol can appear in a PICTURE string";
         private const string MORE_THAN_ONE_DOT_CHARACTER = "Only one occurrence of '.' symbol can appear in a PICTURE string";
         private const string MUTUALLY_EXCLUSIVE_SYMBOLS = "+/-/CR/DB are mutually exclusive";
+        private const string SYMBOLS_CAN_APPEAR_ONLY_ONCE = "E S V . CR DB symbols can appear only once";
+        private const string AT_LEAST_ONE_OR_TWO_OF_SYMBOLS_MUST_BE_PRESENT = "At leas one of symbols A, G, N, X, Z, 9, or *, or at least two of symbols +, -, or CS must be present";
 
         /// <summary>
         /// Picture string constructor.
@@ -122,12 +124,81 @@ namespace TypeCobol.Compiler.Types
             Character[] sequence = CollectPictureSequence(matches, validationMessages);
             if (validationMessages.Count > 0) return new Result(sequence, _currencyDescriptor);
 
+            //2. Validate Character-string representation
+            if (!CheckRepresentation(validationMessages)) return new Result();
+
             //Validate the sequence
             Automata automata = new Automata(this);
             if (automata.Run(sequence, validationMessages))
             {
                 //OK
                 return new Result(sequence, _currencyDescriptor, automata.Category, automata.Digits, automata.RealDigits, automata.IsSigned, automata.Scale, automata.Size);
+            }
+
+            /// <summary>
+            /// Check that the Picture String is well represented
+            /// </summary>
+            /// <returns></returns>
+            bool CheckRepresentation(List<string> messages)
+            {
+                //At least one of the symbols A, G, N, X, Z, 9 or *, or at least two of the symbols +, -, or CS must be present in a PICRURE string
+                bool atLeastOneSymbol = false;
+                int plus = 0, minus = 0, cs = 0;
+                // E S V . CR DB can appear only once
+                int e = 0, s = 0, v = 0, dot = 0, cr = 0, db = 0;
+                foreach (var c in sequence)
+                {
+                    switch(c.SpecialChar)
+                    {
+                        case SC.A:
+                        case SC.G:
+                        case SC.N:
+                        case SC.X:
+                        case SC.Z:
+                        case SC.NINE:
+                        case SC.STAR:
+                            atLeastOneSymbol = true;
+                            break;
+                        case SC.PLUS:
+                            plus += c.Count;
+                            break;
+                        case SC.MINUS:
+                            minus += c.Count;
+                            break;
+                        case SC.CS:
+                            cs += c.Count;
+                            break;
+                        case SC.E:
+                            e += c.Count;
+                            break;
+                        case SC.S:
+                            s += c.Count;
+                            break;
+                        case SC.V:
+                            v += c.Count;
+                            break;
+                        case SC.DOT:
+                            dot += c.Count;
+                            break;
+                        case SC.CR:
+                            cr += c.Count;
+                            break;
+                        case SC.DB:
+                            db += c.Count;
+                            break;
+                    }
+                }
+                if (!(atLeastOneSymbol || (plus >= 2 || minus >= 2 || cs >= 2)))
+                {
+                    messages.Add(AT_LEAST_ONE_OR_TWO_OF_SYMBOLS_MUST_BE_PRESENT);
+                    return false;
+                }
+                if (e > 1 || s > 1 || v > 1 || dot > 1 || cr > 1 || db > 1)
+                {
+                    messages.Add(SYMBOLS_CAN_APPEAR_ONLY_ONCE);
+                    return false;
+                }
+                return true;
             }
 
             //KO
